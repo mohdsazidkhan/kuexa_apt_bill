@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Darker placeholder text across all inputs/textareas */
+input::placeholder,
+textarea::placeholder {
+  color: #4b5563; /* gray-600 */
+  opacity: 1;
+}
