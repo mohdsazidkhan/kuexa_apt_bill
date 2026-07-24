@@ -118,7 +118,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
             <IconClose width={18} height={18} />
           </button>
           <IconUsers width={18} height={18} className="text-indigo-600" />
-          <h2 className="shrink-0 text-base font-semibold text-gray-800">Group Booking</h2>
+          <h2 className="shrink-0 text-base font-semibold text-gray-800">New Appointment</h2>
 
           {/* Auto actions (small) */}
           <div className="flex items-center gap-1.5">
@@ -223,7 +223,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
                 disabled={totalItems === 0}
                 className="rounded-lg bg-[#4a7196] px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3d6083] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {takePayment ? 'Book and Pay Now' : 'Book Group Appointment'}
+                {takePayment ? 'Book and Pay Now' : 'Book Appointment'}
               </button>
             </div>
           </div>

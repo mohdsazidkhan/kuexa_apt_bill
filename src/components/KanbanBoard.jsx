@@ -1,9 +1,19 @@
+import { useState } from 'react'
 import { kanbanColumns, accentClasses, serviceStatuses } from '../data/appointments'
 import { currency } from '../data/services'
-import { IconClock, IconUsers, IconCalendar, IconBilling } from './Icons'
+import { IconClock, IconUsers, IconCalendar, IconBilling, IconArrowUp, IconArrowDown } from './Icons'
 
 // Columns whose cards should NOT show the Bill button.
 const NO_BILL_COLUMNS = ['CANCELLED', 'NO SHOW', 'FULL ADVANCE']
+
+// "4:52 PM" -> minutes since midnight (for time sorting).
+const parseTime = (t) => {
+  const m = /(\d+):(\d+)\s*(AM|PM)/i.exec(t || '')
+  if (!m) return 0
+  let h = Number(m[1]) % 12
+  if (/PM/i.test(m[3])) h += 12
+  return h * 60 + Number(m[2])
+}
 
 // Category subtitle colour just for a bit of life.
 const catColor = 'text-indigo-500'
@@ -140,18 +150,38 @@ function Card({ appt, showBill = true }) {
 }
 
 export default function KanbanBoard({ appointments }) {
+  // Per-column time sort direction: undefined = unsorted, 'asc' | 'desc'.
+  const [sortDir, setSortDir] = useState({})
+  const cycleSort = (key) =>
+    setSortDir((s) => ({ ...s, [key]: s[key] === 'asc' ? 'desc' : 'asc' }))
+
   return (
     <div className="grid grid-cols-1 gap-4 py-2 sm:grid-cols-2 lg:grid-cols-4">
       {kanbanColumns.map((col) => {
-        const items = appointments.filter((a) => a.column === col.key)
+        const dir = sortDir[col.key]
+        let items = appointments.filter((a) => a.column === col.key)
+        if (dir) {
+          items = [...items].sort((x, y) => (parseTime(x.time) - parseTime(y.time)) * (dir === 'desc' ? -1 : 1))
+        }
         const a = accentClasses[col.accent]
         return (
           <div key={col.key} className="flex flex-col">
             <div className={`flex items-center justify-between rounded-t-xl border-t-[3px] p-2 ${a.head}`}>
               <span className="text-sm font-bold tracking-wide">{col.title}</span>
-              <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold text-white ${a.badge}`}>
-                {items.length}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => cycleSort(col.key)}
+                  title={`Sort by time (${dir === 'desc' ? 'latest first' : 'earliest first'})`}
+                  className="rounded p-0.5 hover:bg-black/5"
+                >
+                  {dir === 'desc'
+                    ? <IconArrowDown width={14} height={14} />
+                    : <IconArrowUp width={14} height={14} />}
+                </button>
+                <span className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-semibold text-white ${a.badge}`}>
+                  {items.length}
+                </span>
+              </div>
             </div>
             <div className={`flex-1 space-y-2.5 rounded-b-xl border-x border-b p-2.5 ${a.body} min-w-280px max-w-320px`}>
               {items.map((appt) => <Card key={appt.id} appt={appt} showBill={!NO_BILL_COLUMNS.includes(col.title)} />)}

@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import NewAppointmentModal from '../components/NewAppointmentModal'
 import GroupBookingModal from '../components/GroupBookingModal'
 import KanbanBoard from '../components/KanbanBoard'
 import TopBar from '../components/TopBar'
 import { appointments } from '../data/appointments'
 import { currency } from '../data/services'
-import { IconPlus, IconCalendar, IconUsers, IconGrid, IconMenu, IconClock, IconRefresh } from '../components/Icons'
+import { IconPlus, IconCalendar, IconUsers, IconGrid, IconMenu, IconClock, IconRefresh, IconArrowUp, IconArrowDown } from '../components/Icons'
 
 // ---- Top stat chips ----
 const statChips = [
@@ -55,6 +55,11 @@ export default function Appointments() {
   const [view, setView] = useState('kanban')
   const [dateFilter, setDateFilter] = useState('Today')
   const [statusFilter, setStatusFilter] = useState('All Status')
+  const topRef = useRef(null)
+  const bottomRef = useRef(null)
+
+  const scrollToTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
 
   useEffect(() => {
     if (!toast) return
@@ -68,7 +73,7 @@ export default function Appointments() {
   }
 
   return (
-    <div className="-mx-6 -my-8 min-h-screen bg-gray-50">
+    <div className="-mx-6 -my-8 flex h-screen flex-col overflow-hidden bg-gray-50">
       {/* Success toast */}
       {toast && (
         <div className="fixed right-6 top-6 z-[70] flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 shadow-lg">
@@ -80,7 +85,8 @@ export default function Appointments() {
       {/* Top navbar */}
       <TopBar title="Appointments" />
 
-      <div className="py-2 px-4">
+      {/* Fixed top section — header, tabs, filters */}
+      <div className="shrink-0 px-4 pt-2">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -97,12 +103,6 @@ export default function Appointments() {
           <button className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:bg-gray-50"><IconRefresh width={16} height={16} /></button>
           <button
             onClick={() => setGroupOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
-          >
-            <IconUsers width={14} height={14} /> Group Booking
-          </button>
-          <button
-            onClick={() => setOpen(true)}
             className="flex items-center gap-1.5 rounded-lg bg-[#3b5c7e] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#32506e]"
           >
             <IconPlus width={14} height={14} /> New Appointment
@@ -141,9 +141,31 @@ export default function Appointments() {
         <select className="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 outline-none">
           <option>All stylists</option>
         </select>
-        <span className="ml-auto text-xs text-gray-400">{appointments.length} shown</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-gray-400">{appointments.length} shown</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={scrollToTop}
+              title="Scroll to top"
+              className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+            >
+              <IconArrowUp width={14} height={14} />
+            </button>
+            <button
+              onClick={scrollToBottom}
+              title="Scroll to bottom"
+              className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+            >
+              <IconArrowDown width={14} height={14} />
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
 
+      {/* Scrollable cards/board section */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-1">
+      <div ref={topRef} />
       {/* Body */}
       <div className="mt-1">
         {view === 'kanban' && <KanbanBoard appointments={appointments} />}
@@ -154,6 +176,7 @@ export default function Appointments() {
           </div>
         )}
       </div>
+      <div ref={bottomRef} />
       </div>
 
       <NewAppointmentModal open={open} onClose={() => setOpen(false)} onBooked={handleBooked} />

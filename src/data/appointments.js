@@ -20,169 +20,139 @@ export const kanbanColumns = [
 ]
 
 export const appointments = [
+  // --- SCHEDULED (2) ---
   {
-    id: 'APT-20260723165418341-63',
-    time: '4:52 PM',
-    date: '24 Jul 2026',
-    source: 'Walk-in',
-    billed: false,
-    group: true,
-    clients: 0,
-    customer: 'Group',
-    phone: '',
-    priority: null,
-    column: 'scheduled',
+    id: 'APT-20260723165418341-63', time: '4:52 PM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
+    group: true, clients: 0, customer: 'Group', phone: '', priority: null, column: 'scheduled',
     services: [
       { name: 'Blow Dry & Styling', category: 'Hair', stylist: '', date: '24 Jul 2026', time: '4:52 PM', duration: 45, price: 440, status: 'Scheduled' },
       { name: 'Facial - Basic Clean-Up', category: 'Skin Care', stylist: '', date: '24 Jul 2026', time: '5:37 PM', duration: 60, price: 900, status: 'Scheduled' },
     ],
   },
   {
-    id: 'APT-20260724090012045-11',
-    time: '9:00 AM',
-    date: '24 Jul 2026',
-    source: 'Phone',
-    billed: false,
-    customer: 'Ananya Gupta',
-    phone: '9876543210',
-    priority: null,
-    column: 'scheduled',
-    services: [
-      { name: 'Women Ombrè Highlights', category: 'Hair', stylist: 'PRIYA', date: '24 Jul 2026', time: '9:00 AM', duration: 120, price: 7000, status: 'Scheduled' },
-    ],
+    id: 'APT-20260724090012045-11', time: '9:00 AM', date: '24 Jul 2026', source: 'Phone', billed: false,
+    customer: 'Ananya Gupta', phone: '9876543210', priority: null, column: 'scheduled',
+    services: [{ name: 'Women Ombrè Highlights', category: 'Hair', stylist: 'PRIYA', date: '24 Jul 2026', time: '9:00 AM', duration: 120, price: 7000, status: 'Scheduled' }],
+  },
+
+  // --- CHECKED-IN (2) ---
+  {
+    id: 'APT-20260721134354107-63', time: '11:06 AM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
+    customer: 'Seema', phone: '9845347490', priority: null, column: 'checkedin',
+    services: [{ name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '11:06 AM', duration: 45, price: 440, status: 'Scheduled' }],
   },
   {
-    id: 'APT-20260724103000771-27',
-    time: '10:30 AM',
-    date: '24 Jul 2026',
-    source: 'Online',
-    billed: false,
-    customer: 'Priya Sharma',
-    phone: '9834567812',
-    priority: null,
-    column: 'scheduled',
-    services: [
-      { name: 'Female Airbrush Party', category: 'Makeup', stylist: 'SNEHA', date: '24 Jul 2026', time: '10:30 AM', duration: 50, price: 6000, status: 'Scheduled' },
-    ],
+    id: 'APT-20260724115500332-08', time: '11:45 AM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
+    customer: 'Karan Mehta', phone: '9654321870', priority: null, column: 'checkedin',
+    services: [{ name: 'Men Express Color Treatment', category: 'Hair', stylist: 'RAHUL', date: '24 Jul 2026', time: '11:45 AM', duration: 30, price: 3000, status: 'Scheduled' }],
+  },
+
+  // --- IN PROGRESS (2) ---
+  {
+    id: 'APT-20260720121828678-63', time: '3:00 PM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
+    customer: 'Acharya Manoj Kumar', phone: '9871425920', priority: 'High', column: 'inprogress',
+    services: [{ name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '3:00 PM', duration: 45, price: 440, status: 'In Progress' }],
   },
   {
-    id: 'APT-20260721134354107-63',
-    time: '11:06 AM',
-    date: '24 Jul 2026',
-    source: 'Walk-in',
-    billed: false,
-    customer: 'Seema',
-    phone: '9845347490',
-    priority: null,
-    column: 'checkedin',
-    services: [
-      { name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '11:06 AM', duration: 45, price: 440, status: 'Scheduled' },
-    ],
+    id: 'APT-20260724140000119-42', time: '2:00 PM', date: '24 Jul 2026', source: 'Online', billed: false,
+    customer: 'Rajat Katiyar', phone: '7380785008', priority: null, column: 'inprogress',
+    services: [{ name: 'Women Straight Hair Therapy', category: 'Hair', stylist: 'AARAV', date: '24 Jul 2026', time: '2:00 PM', duration: 180, price: 8000, status: 'In Progress' }],
+  },
+
+  // --- COMPLETED (2) ---
+  {
+    id: 'APT-20260720121828999-63', time: '3:00 PM', date: '24 Jul 2026', source: 'Walk-in', billed: true,
+    customer: 'Acharya Manoj Kumar', phone: '9871425920', priority: 'High', column: 'completed',
+    services: [{ name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '3:00 PM', duration: 45, price: 440, status: 'Completed' }],
   },
   {
-    id: 'APT-20260724115500332-08',
-    time: '11:45 AM',
-    date: '24 Jul 2026',
-    source: 'Walk-in',
-    billed: false,
-    customer: 'Karan Mehta',
-    phone: '9654321870',
-    priority: null,
-    column: 'checkedin',
-    services: [
-      { name: 'Men Express Color Treatment', category: 'Hair', stylist: 'RAHUL', date: '24 Jul 2026', time: '11:45 AM', duration: 30, price: 3000, status: 'Scheduled' },
-    ],
+    id: 'APT-20260724130000551-19', time: '1:00 PM', date: '24 Jul 2026', source: 'Phone', billed: true,
+    customer: 'Rohit Malhotra', phone: '9765432109', priority: null, column: 'completed',
+    services: [{ name: 'Hair Spa', category: 'Hair Treatments', stylist: 'SNEHA', date: '24 Jul 2026', time: '1:00 PM', duration: 50, price: 1200, status: 'Completed' }],
   },
+
+  // --- DRAFT (2) ---
   {
-    id: 'APT-20260724120000556-14',
-    time: '12:00 PM',
-    date: '24 Jul 2026',
-    source: 'Phone',
-    billed: false,
-    customer: 'Divya Iyer',
-    phone: '9900456781',
-    priority: null,
-    column: 'checkedin',
-    services: [
-      { name: 'Female Body Polishing', category: 'Skin Care', stylist: 'SNEHA', date: '24 Jul 2026', time: '12:00 PM', duration: 60, price: 5000, status: 'Scheduled' },
-    ],
-  },
-  {
-    id: 'APT-20260720121828678-63',
-    time: '3:00 PM',
-    date: '24 Jul 2026',
-    source: 'Walk-in',
-    billed: false,
-    customer: 'Acharya Manoj Kumar',
-    phone: '9871425920',
-    priority: 'High',
-    column: 'inprogress',
-    services: [
-      { name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '3:00 PM', duration: 45, price: 440, status: 'In Progress' },
-    ],
-  },
-  {
-    id: 'APT-20260724140000119-42',
-    time: '2:00 PM',
-    date: '24 Jul 2026',
-    source: 'Online',
-    billed: false,
-    customer: 'Rajat Katiyar',
-    phone: '7380785008',
-    priority: null,
-    column: 'inprogress',
-    services: [
-      { name: 'Women Straight Hair Therapy', category: 'Hair', stylist: 'AARAV', date: '24 Jul 2026', time: '2:00 PM', duration: 180, price: 8000, status: 'In Progress' },
-    ],
-  },
-  {
-    id: 'APT-20260720121828999-63',
-    time: '3:00 PM',
-    date: '24 Jul 2026',
-    source: 'Walk-in',
-    billed: true,
-    customer: 'Acharya Manoj Kumar',
-    phone: '9871425920',
-    priority: 'High',
-    column: 'completed',
-    services: [
-      { name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '3:00 PM', duration: 45, price: 440, status: 'Completed' },
-    ],
-  },
-  {
-    id: 'APT-20260724130000201-51', time: '1:00 PM', date: '24 Jul 2026', source: 'Online', billed: false,
+    id: 'APT-20260725114500801-03', time: '11:45 AM', date: '25 Jul 2026', source: 'Walk-in', billed: false,
     customer: 'Imran Ansari', phone: '9700456123', priority: null, column: 'draft',
-    services: [{ name: 'Men Airbrush Make Up', category: 'Makeup', stylist: 'IMRAN', date: '24 Jul 2026', time: '1:00 PM', duration: 160, price: 7000, status: 'Scheduled' }],
+    services: [{ name: 'Men Airbrush Make Up', category: 'Airbrush Makeup', stylist: '', date: '25 Jul 2026', time: '11:45 AM', duration: 160, price: 7000, status: 'Scheduled' }],
   },
   {
-    id: 'APT-20260724100000202-52', time: '10:00 AM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
+    id: 'APT-20260725103000442-27', time: '10:30 AM', date: '25 Jul 2026', source: 'Online', billed: false,
+    customer: 'Priya Sharma', phone: '9834567812', priority: null, column: 'draft',
+    services: [{ name: 'Female Airbrush Party', category: 'Party Makeup', stylist: '', date: '25 Jul 2026', time: '10:30 AM', duration: 50, price: 6000, status: 'Scheduled' }],
+  },
+
+  // --- WAITING (2) ---
+  {
+    id: 'APT-20260725180000660-14', time: '6:00 PM', date: '25 Jul 2026', source: 'Walk-in', billed: false,
     customer: 'Sneha Reddy', phone: '9812309876', priority: null, column: 'waiting',
-    services: [{ name: 'Facial - Basic Clean-Up', category: 'Skin Care', stylist: 'PRIYA', date: '24 Jul 2026', time: '10:00 AM', duration: 60, price: 900, status: 'Scheduled' }],
+    services: [{ name: 'Facial - Basic Clean-Up', category: 'Skin Care', stylist: 'SNEHA', date: '25 Jul 2026', time: '6:00 PM', duration: 60, price: 900, status: 'Scheduled' }],
   },
   {
-    id: 'APT-20260724160000203-53', time: '4:00 PM', date: '25 Jul 2026', source: 'Phone', billed: false,
-    customer: 'Vikram Singh', phone: '9812345678', priority: null, column: 'rescheduled',
-    services: [{ name: 'Beard Grooming & Trim', category: 'Grooming', stylist: 'RAHUL', date: '25 Jul 2026', time: '4:00 PM', duration: 20, price: 250, status: 'Rescheduled' }],
+    id: 'APT-20260725123000318-22', time: '12:30 PM', date: '25 Jul 2026', source: 'Walk-in', billed: false,
+    customer: 'Vikram Singh', phone: '9812345678', priority: null, column: 'waiting',
+    services: [{ name: 'Beard Grooming & Trim', category: 'Beard Service', stylist: 'IMRAN', date: '25 Jul 2026', time: '12:30 PM', duration: 20, price: 250, status: 'Scheduled' }],
+  },
+
+  // --- RESCHEDULED (2) ---
+  {
+    id: 'APT-20260726140000733-31', time: '2:00 PM', date: '26 Jul 2026', source: 'Phone', billed: false,
+    customer: 'Meera Nair', phone: '9900112233', priority: null, column: 'rescheduled',
+    services: [{ name: 'Female Body Polishing', category: 'Body Spa', stylist: 'SNEHA', date: '26 Jul 2026', time: '2:00 PM', duration: 60, price: 5000, status: 'Rescheduled' }],
   },
   {
-    id: 'APT-20260724090000204-54', time: '9:30 AM', date: '24 Jul 2026', source: 'Online', billed: false,
+    id: 'APT-20260726160000909-38', time: '4:00 PM', date: '26 Jul 2026', source: 'Online', billed: false,
+    customer: 'Karan Mehta', phone: '9654321870', priority: null, column: 'rescheduled',
+    services: [{ name: 'Beard Grooming & Trim', category: 'Beard Service', stylist: 'RAHUL', date: '26 Jul 2026', time: '4:00 PM', duration: 20, price: 250, status: 'Rescheduled' }],
+  },
+
+  // --- PARTIAL ADVANCE (2) ---
+  {
+    id: 'APT-20260726120000556-14', time: '12:00 PM', date: '26 Jul 2026', source: 'Phone', billed: false,
+    customer: 'Divya Iyer', phone: '9900456781', priority: null, column: 'partialadvance',
+    services: [{ name: 'Female Body Polishing', category: 'Body Spa', stylist: 'SNEHA', date: '26 Jul 2026', time: '12:00 PM', duration: 60, price: 5000, status: 'Confirmed' }],
+  },
+  {
+    id: 'APT-20260726153000771-45', time: '3:30 PM', date: '26 Jul 2026', source: 'Online', billed: false,
+    customer: 'Ananya Gupta', phone: '9876543210', priority: null, column: 'partialadvance',
+    services: [{ name: 'Hair Spa', category: 'Hair Treatments', stylist: 'PRIYA', date: '26 Jul 2026', time: '3:30 PM', duration: 50, price: 1200, status: 'Confirmed' }],
+  },
+
+  // --- CANCELLED (2) ---
+  {
+    id: 'APT-20260725183000110-77', time: '6:30 PM', date: '25 Jul 2026', source: 'Phone', billed: false,
     customer: 'Meera Nair', phone: '9900112233', priority: null, column: 'cancelled',
-    services: [{ name: 'Female Body Polishing', category: 'Skin Care', stylist: 'SNEHA', date: '24 Jul 2026', time: '9:30 AM', duration: 60, price: 5000, status: 'Cancelled' }],
+    services: [{ name: 'Beard Grooming & Trim', category: 'Beard Service', stylist: 'IMRAN', date: '25 Jul 2026', time: '6:30 PM', duration: 20, price: 250, status: 'Cancelled' }],
   },
   {
-    id: 'APT-20260724110000205-55', time: '11:00 AM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
-    customer: 'Karan Mehta', phone: '9654321870', priority: null, column: 'noshow',
-    services: [{ name: 'Men Express Color Treatment', category: 'Hair', stylist: 'RAHUL', date: '24 Jul 2026', time: '11:00 AM', duration: 30, price: 3000, status: 'No Show' }],
+    id: 'APT-20260725170000205-88', time: '5:00 PM', date: '25 Jul 2026', source: 'Walk-in', billed: false,
+    customer: 'Rohit Malhotra', phone: '9765432109', priority: null, column: 'cancelled',
+    services: [{ name: 'Men Face De-tan', category: 'De Tan', stylist: 'AARAV', date: '25 Jul 2026', time: '5:00 PM', duration: 30, price: 500, status: 'Cancelled' }],
   },
+
+  // --- FULL ADVANCE (2) ---
   {
-    id: 'APT-20260724143000206-56', time: '2:30 PM', date: '26 Jul 2026', source: 'Online', billed: true,
-    customer: 'Priya Sharma', phone: '9834567812', priority: null, column: 'partialadvance',
-    services: [{ name: 'Female Airbrush Party', category: 'Makeup', stylist: 'SNEHA', date: '26 Jul 2026', time: '2:30 PM', duration: 50, price: 6000, status: 'Confirmed' }],
-  },
-  {
-    id: 'APT-20260724170000207-57', time: '5:00 PM', date: '26 Jul 2026', source: 'Phone', billed: true,
+    id: 'APT-20260726170000207-57', time: '5:00 PM', date: '26 Jul 2026', source: 'Phone', billed: true,
     customer: 'Divya Iyer', phone: '9900456781', priority: null, column: 'fulladvance',
     services: [{ name: 'Women Straight Hair Therapy', category: 'Hair', stylist: 'AARAV', date: '26 Jul 2026', time: '5:00 PM', duration: 180, price: 8000, status: 'Confirmed' }],
+  },
+  {
+    id: 'APT-20260726100000642-61', time: '10:00 AM', date: '26 Jul 2026', source: 'Online', billed: true,
+    customer: 'Rajat Katiyar', phone: '7380785008', priority: null, column: 'fulladvance',
+    services: [{ name: 'Women Ombrè Highlights', category: 'Hair', stylist: 'PRIYA', date: '26 Jul 2026', time: '10:00 AM', duration: 120, price: 7000, status: 'Confirmed' }],
+  },
+
+  // --- NO SHOW (2) ---
+  {
+    id: 'APT-20260724150000473-92', time: '3:00 PM', date: '24 Jul 2026', source: 'Walk-in', billed: false,
+    customer: 'Karan Mehta', phone: '9654321870', priority: null, column: 'noshow',
+    services: [{ name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: '24 Jul 2026', time: '3:00 PM', duration: 45, price: 440, status: 'No Show' }],
+  },
+  {
+    id: 'APT-20260724164500384-70', time: '4:45 PM', date: '24 Jul 2026', source: 'Phone', billed: false,
+    customer: 'Sneha Reddy', phone: '9812309876', priority: null, column: 'noshow',
+    services: [{ name: 'Hair Massage', category: 'Head Massage', stylist: 'IMRAN', date: '24 Jul 2026', time: '4:45 PM', duration: 30, price: 500, status: 'No Show' }],
   },
 ]
 
