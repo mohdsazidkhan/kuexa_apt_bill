@@ -66,8 +66,8 @@ export default function RecentVisitsModal({ open, onClose }) {
       {/* Right-side drawer — same style as the New Appointment drawer */}
       <div
         style={{ width: 'calc(100% - 16rem)' }}
-        className={`fixed right-0 top-0 z-50 flex h-screen flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-50 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${
+          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
         }`}
       >
         {/* Header */}

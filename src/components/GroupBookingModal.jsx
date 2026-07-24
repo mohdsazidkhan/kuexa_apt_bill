@@ -110,7 +110,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
       {/* Right-side drawer */}
       <div
         style={{ width: 'calc(100% - 16rem)' }}
-        className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'}`}
       >
         {/* Header with client tabs */}
         <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-2">

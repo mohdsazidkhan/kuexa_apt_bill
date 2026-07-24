@@ -419,8 +419,8 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
       {/* Right-side drawer — slides in, sits beside the 16rem sidebar */}
       <div
         style={{ width: 'calc(100% - 16rem)' }}
-        className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${
+          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
         }`}
       >
         {/* Header */}
