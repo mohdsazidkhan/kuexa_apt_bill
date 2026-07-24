@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { services, products, plans, serviceCategories, currency } from '../data/services'
 import { IconScissors, IconClose, IconSearch, IconGrid, IconTag } from './Icons'
+import { GenderBadge } from './apptFields'
 
 const TABS = [
   { key: 'services', label: 'Services', icon: IconScissors, data: services },
@@ -142,10 +143,12 @@ export default function ServiceModal({ open, onClose, onAdd }) {
                       : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'
                   }`}
                 >
-                  {item.type && (
+                  {item.type ? (
                     <span className={`mb-1 rounded px-1.5 py-0.5 text-[9px] font-semibold ${planTagStyle[item.type] ?? 'bg-gray-100 text-gray-600'}`}>
                       {item.type}
                     </span>
+                  ) : (
+                    tab === 'services' && <span className="mb-1"><GenderBadge name={item.name} /></span>
                   )}
                   <span className="line-clamp-2 text-[11px] font-medium leading-tight text-gray-700">{item.name}</span>
                   <span className="mt-1 text-sm font-semibold text-indigo-600">{currency(item.price)}</span>

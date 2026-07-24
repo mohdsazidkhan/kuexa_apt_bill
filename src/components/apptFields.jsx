@@ -56,6 +56,22 @@ const tagMeta = {
 }
 export const tagStyle = (tag) => tagMeta[tag] ?? tagMeta.Service
 
+// Derive a gender indicator from the service name.
+export const serviceGender = (name = '') => {
+  const n = name.toLowerCase()
+  if (/female|women|ladies|girl/.test(n)) return 'F'
+  if (/male|\bmen\b|men |gents|beard/.test(n)) return 'M'
+  return 'U'
+}
+
+// Small M / F / U badge shown on a service item.
+export function GenderBadge({ name }) {
+  const g = serviceGender(name)
+  const style = g === 'M' ? 'bg-blue-100 text-blue-700' : g === 'F' ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500'
+  const title = g === 'M' ? 'Male' : g === 'F' ? 'Female' : 'Unisex'
+  return <span title={title} className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${style}`}>{g}</span>
+}
+
 let uidCounter = 0
 export const emptyItem = () => ({
   uid: `it-${uidCounter++}`,

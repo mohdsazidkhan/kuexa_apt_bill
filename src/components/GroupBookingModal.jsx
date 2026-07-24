@@ -8,7 +8,7 @@ import ClientDetailsDrawer from './ClientDetailsDrawer'
 import { currency, stylists } from '../data/services'
 import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
-  FUTURE_DATES, TIME_SLOTS, DEFAULT_TIME, tagStyle, kindMeta, itemToRow,
+  FUTURE_DATES, TIME_SLOTS, DEFAULT_TIME, tagStyle, kindMeta, itemToRow, GenderBadge, serviceGender,
 } from './apptFields'
 import { IconClose, IconUsers, IconGrid, IconPlus, IconHome, IconMenu } from './Icons'
 
@@ -23,6 +23,27 @@ const newGuest = () => ({
   homeService: false,
 })
 
+// Gender helpers for smart service distribution.
+const normGender = (g) => (g === 'Male' || g === 'M' ? 'M' : g === 'Female' || g === 'F' ? 'F' : null)
+const genderWord = (G) => (G === 'M' ? 'Male' : 'Female')
+
+// Build a placeholder guest-client of gender G ON DEMAND (only when auto-creating /
+// "New guest"). Numbering (Guest 1 M, Guest 2 M, Guest 1 F...) is per gender, derived
+// from how many placeholder guests already exist. Real clients are picked normally.
+const makePlaceholderGuest = (G, existing) => {
+  const n = existing.filter((x) => (x.customer?.id || '').includes('-ph-') && x.customer?.gender === genderWord(G)).length + 1
+  const base = newGuest()
+  return {
+    ...base,
+    customer: {
+      id: `${base.id}-ph-${G}`,
+      name: `Guest ${n} ${G}`,
+      phone: `9${G === 'M' ? '3' : '8'}${String(n).padStart(8, '0')}`,
+      gender: genderWord(G),
+    },
+  }
+}
+
 export default function GroupBookingModal({ open, onClose, onBooked }) {
   const [guests, setGuests] = useState(() => [newGuest()])
   const [active, setActive] = useState(() => guests[0]?.id)
@@ -31,6 +52,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
   const [recentOpen, setRecentOpen] = useState(false)
   const [takePayment, setTakePayment] = useState(false)
   const [clientView, setClientView] = useState(null) // customer being viewed in ClientDetailsDrawer
+  const [pendingSplit, setPendingSplit] = useState(null) // Rule 3 confirm: { gender, items, existingId, existingName }
   const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
@@ -41,8 +63,73 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
     setGuests((gs) => gs.map((g) => (g.id === gid ? { ...g, rows: g.rows.map((r) => (r.uid === uid ? { ...r, ...patch } : r)) } : g)))
   const removeRow = (gid, uid) =>
     setGuests((gs) => gs.map((g) => (g.id === gid ? { ...g, rows: g.rows.filter((r) => r.uid !== uid) } : g)))
-  const addRows = (gid, items) =>
-    setGuests((gs) => gs.map((g) => (g.id === gid ? { ...g, rows: [...g.rows, ...items.map(itemToRow)] } : g)))
+  // Smart add: distribute selected services into guests by gender.
+  //  - unisex / unknown-gender guest / same-gender  -> current guest
+  //  - same service already in current (duplicate)   -> another same-gender guest (or new w/ dummy customer)
+  //  - different gender, no such guest               -> auto-create new guest (dummy same-gender customer)
+  //  - different gender, guest exists                -> ask (Rule 3 modal)
+  const addRows = (curId, items) => {
+    const working = guests.map((g) => ({ ...g, rows: [...g.rows] }))
+    const cur = working.find((g) => g.id === curId)
+    if (!cur) return
+    const curG = normGender(cur.customer?.gender)
+    const preIds = new Set(working.map((g) => g.id)) // guests that existed BEFORE this add
+    const has = (g, name) => g.rows.some((r) => r.name === name)
+    const createdByGender = {} // reuse a guest created during THIS add per gender
+    const makeGuest = (G) => {
+      const g = makePlaceholderGuest(G, working)
+      working.push(g)
+      return g
+    }
+
+    const pendItems = []
+    let pendGender = null
+    for (const it of items) {
+      const sg = serviceGender(it.name)
+      const row = itemToRow(it)
+      // unisex / current guest has no gender -> current guest, no questions
+      if (sg === 'U' || !curG) { cur.rows.push(row); continue }
+
+      const matching = working.filter((g) => preIds.has(g.id) && normGender(g.customer?.gender) === sg)
+      const differentGender = sg !== curG
+      const dup = matching.some((g) => has(g, it.name)) || has(cur, it.name)
+
+      // Ask when a matching-gender guest already exists AND (it's a different gender OR the service is a duplicate).
+      if (matching.length > 0 && (differentGender || dup)) {
+        pendItems.push(it)
+        pendGender = sg
+      } else if (differentGender) {
+        // no matching-gender guest yet -> auto-create one (reused for this add)
+        ;(createdByGender[sg] ||= makeGuest(sg)).rows.push(row)
+      } else {
+        cur.rows.push(row) // same gender, not a duplicate -> current guest
+      }
+    }
+    setGuests(working)
+    if (pendItems.length && pendGender) {
+      const candidates = working
+        .filter((g) => preIds.has(g.id) && normGender(g.customer?.gender) === pendGender)
+        .map((g) => ({ id: g.id, name: g.customer?.name || g.label }))
+      setPendingSplit({ gender: pendGender, items: pendItems, candidates })
+    }
+  }
+
+  // Resolve the confirm: target = a guest id, or 'new'.
+  const resolveSplit = (target) => {
+    if (!pendingSplit) return
+    const { items, gender } = pendingSplit
+    const rows = items.map(itemToRow)
+    setPendingSplit(null)
+
+    if (target === 'new') {
+      // Build the new placeholder guest OUTSIDE the state updater (pure update).
+      const g = { ...makePlaceholderGuest(gender, guests), rows }
+      setGuests((gs) => [...gs, g])
+      setActive(g.id)
+    } else {
+      setGuests((gs) => gs.map((x) => (x.id === target ? { ...x, rows: [...x.rows, ...rows] } : x)))
+    }
+  }
 
   // Round-robin assign stylists to a guest's service rows.
   const autoAssign = (gid) =>
@@ -244,6 +331,43 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
       />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
+
+      {/* Confirm — matching-gender guest(s) exist: pick a client or make a new guest */}
+      {pendingSplit && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {genderWord(pendingSplit.gender)} service{pendingSplit.items.length > 1 ? 's' : ''} — which client?
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              To which client would you like to add{' '}
+              <span className="font-medium text-gray-700">{pendingSplit.items.map((i) => i.name).join(', ')}</span>?
+              Pick an existing client, or create a new guest.
+            </p>
+            <div className="mt-5 space-y-2">
+              {pendingSplit.candidates.map((c, idx) => (
+                <button
+                  key={c.id}
+                  onClick={() => resolveSplit(c.id)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium ${
+                    idx === 0
+                      ? 'bg-[#4a7196] text-white shadow hover:bg-[#3d6083]'
+                      : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <IconUsers width={15} height={15} /> Add to {c.name}
+                </button>
+              ))}
+              <button
+                onClick={() => resolveSplit('new')}
+                className="flex w-full items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
+              >
+                <IconPlus width={15} height={15} /> Create a new guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -410,6 +534,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                           <span className="flex min-w-0 flex-1 items-center gap-2">
                             <span className="truncate text-sm font-semibold text-gray-800">{row.name}</span>
                             <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${m.pill}`}>{tag}</span>
+                            <GenderBadge name={row.name} />
                           </span>
                           <div className="w-16 shrink-0"><input className={cInput} value={row.duration} onChange={(e) => onRow(row.uid, { duration: e.target.value })} /></div>
                           <div className="w-36 shrink-0"><StylistSelect value={row.stylist} onChange={(v) => onRow(row.uid, { stylist: v })} /></div>
