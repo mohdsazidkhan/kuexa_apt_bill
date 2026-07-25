@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TopBar from '../components/TopBar'
 import NewBillModal from '../components/NewBillModal'
 import {
@@ -49,6 +49,13 @@ const currency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', cu
 
 export default function Billing() {
   const [newBillOpen, setNewBillOpen] = useState(false)
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(''), 3500)
+    return () => clearTimeout(t)
+  }, [toast])
   const [activeTab, setActiveTab] = useState('All')
   const [summaryOpen, setSummaryOpen] = useState(false)
 
@@ -358,7 +365,27 @@ export default function Billing() {
         </div>
       </div>
 
-      <NewBillModal open={newBillOpen} onClose={() => setNewBillOpen(false)} />
+      <NewBillModal 
+        open={newBillOpen} 
+        onClose={() => setNewBillOpen(false)}
+        onBooked={() => {
+          setNewBillOpen(false);
+          setToast('Bill Created Successfully');
+        }}
+        onSaveDraft={() => {
+          setNewBillOpen(false);
+          setToast('Bill Saved as Draft');
+        }}
+      />
+      {/* Success toast */}
+      {toast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <span className="font-medium text-sm">{toast}</span>
+        </div>
+      )}
     </div>
   )
 }

@@ -44,7 +44,7 @@ const makePlaceholderGuest = (G, existing) => {
   }
 }
 
-export default function NewBillModal({ open, onClose, onBooked }) {
+export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [guests, setGuests] = useState(() => [newGuest()])
   const [active, setActive] = useState(() => guests[0]?.id)
   const [browseFor, setBrowseFor] = useState(null) // guestId while Browse modal is open
@@ -60,9 +60,7 @@ export default function NewBillModal({ open, onClose, onBooked }) {
   const [splitRows, setSplitRows] = useState([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
   const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [source, setSource] = useState('Walk-in')
-  const navigate = useNavigate()
+    const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
 
@@ -334,13 +332,13 @@ export default function NewBillModal({ open, onClose, onBooked }) {
 
               <div className="flex flex-1 max-w-md gap-3 ml-auto">
                 <button
-                  onClick={onClose}
+                  onClick={onSaveDraft || onClose}
                   className="flex-[1] rounded-lg border-2 border-indigo-400 py-2 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
                 >
                   Save Draft
                 </button>
                 <button
-                  onClick={() => setConfirmOpen(true)}
+                  onClick={handleBook}
                   disabled={totalItems === 0 || (splitPayment && !isBalanced)}
                   className="flex-[3] rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -377,13 +375,13 @@ export default function NewBillModal({ open, onClose, onBooked }) {
 
               <div className="flex flex-1 max-w-md gap-3 ml-auto">
                 <button
-                  onClick={onClose}
+                  onClick={onSaveDraft || onClose}
                   className="flex-[1] rounded-lg border-2 border-indigo-400 py-2 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
                 >
                   Save Draft
                 </button>
                 <button
-                  onClick={() => setConfirmOpen(true)}
+                  onClick={handleBook}
                   disabled={totalItems === 0 || (splitPayment && !isBalanced)}
                   className="flex-[3] rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -446,69 +444,6 @@ export default function NewBillModal({ open, onClose, onBooked }) {
         </div>
       )}
 
-      {/* Booking source confirmation */}
-      {confirmOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-2">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-gray-800">Confirm Booking</h3>
-            <p className="mt-1 text-sm text-gray-500">Add any remarks and select the appointment source to continue.</p>
-
-            {/* Remarks */}
-            <div className="mt-4">
-              <label className="mb-1.5 block text-sm font-medium text-gray-600">Remarks</label>
-              <textarea
-                value={remarks}
-                maxLength={500}
-                onChange={(e) => setRemarks(e.target.value)}
-                rows={3}
-                placeholder="Any special instructions or notes..."
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y"
-              />
-              <div className="mt-1 text-right text-xs text-gray-400">{remarks.length} / 500</div>
-            </div>
-
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              {['Walk-in', 'Phone'].map((opt) => (
-                <label
-                  key={opt}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${
-                    source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="booking-source"
-                    value={opt}
-                    checked={source === opt}
-                    onChange={() => setSource(opt)}
-                    className="h-4 w-4 accent-indigo-600"
-                  />
-                  <span className="text-sm font-medium text-gray-700">{opt}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => { setConfirmOpen(false); setSource('Walk-in') }}
-                className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                   setConfirmOpen(false);
-                   handleBook();
-                }}
-                disabled={!source}
-                className="rounded-lg bg-[#4a7196] px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3d6083] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Confirm Booking
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
