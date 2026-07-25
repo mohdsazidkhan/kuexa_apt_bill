@@ -60,6 +60,8 @@ export default function NewBillModal({ open, onClose, onBooked }) {
   const [splitRows, setSplitRows] = useState([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
   const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [source, setSource] = useState('Walk-in')
   const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
@@ -179,8 +181,12 @@ export default function NewBillModal({ open, onClose, onBooked }) {
     })
 
   // --- totals ---
-  const guestTotal = (g) => g.rows.reduce((s, r) => s + ((Number(r.price) || 0) * (r.qty || 1)), 0)
+  const rowDiscountAmount = (r) => Math.min((Number(r.price) || 0) * (r.qty || 1), ((r.kind === 'service' || r.kind === 'product') ? 440 : 0))
+  const rowTotal = (r) => Math.max(0, (Number(r.price) || 0) * (r.qty || 1) - rowDiscountAmount(r))
+  const guestTotal = (g) => g.rows.reduce((s, r) => s + rowTotal(r), 0)
   const grandTotal = guests.reduce((s, g) => s + guestTotal(g), 0)
+  const grossTotal = guests.reduce((s, g) => s + g.rows.reduce((ss, r) => ss + ((Number(r.price) || 0) * (r.qty || 1)), 0), 0)
+  const totalPackageDiscount = guests.reduce((s, g) => s + g.rows.reduce((ss, r) => ss + rowDiscountAmount(r), 0), 0)
   const totalItems = guests.reduce((s, g) => s + g.rows.length, 0)
 
   const guestName = (g) => g.customer?.name || g.label
@@ -261,10 +267,11 @@ export default function NewBillModal({ open, onClose, onBooked }) {
         <div className="flex-1 overflow-y-auto bg-gray-50/40 p-4">
           {showAll ? (
             <div className="space-y-4">
-              <AllSummary guests={guests} guestName={guestName} guestTotal={guestTotal} onOpen={setActive} onClient={setClientView} />
+              <AllSummary guests={guests} guestName={guestName} guestTotal={guestTotal} onOpen={setActive} onClient={setClientView} rowDiscountAmount={rowDiscountAmount} />
 
               <CheckoutPanel
-                subtotal={grandTotal}
+                subtotal={grossTotal}
+                packageDiscount={totalPackageDiscount}
                 manualDiscount={manualDiscount} setManualDiscount={setManualDiscount}
                 tip={tip} setTip={setTip}
                 paymentMode={paymentMode} setPaymentMode={setPaymentMode}
@@ -291,6 +298,7 @@ export default function NewBillModal({ open, onClose, onBooked }) {
               onBrowse={() => setBrowseFor(activeGuest.id)}
               onClientDetails={() => setClientView(activeGuest.customer)}
               total={guestTotal(activeGuest)}
+              rowDiscountAmount={rowDiscountAmount}
             />
           )}
         </div>
@@ -332,7 +340,7 @@ export default function NewBillModal({ open, onClose, onBooked }) {
                   Save Draft
                 </button>
                 <button
-                  onClick={handleBook}
+                  onClick={() => setConfirmOpen(true)}
                   disabled={totalItems === 0 || (splitPayment && !isBalanced)}
                   className="flex-[3] rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -375,7 +383,7 @@ export default function NewBillModal({ open, onClose, onBooked }) {
                   Save Draft
                 </button>
                 <button
-                  onClick={handleBook}
+                  onClick={() => setConfirmOpen(true)}
                   disabled={totalItems === 0 || (splitPayment && !isBalanced)}
                   className="flex-[3] rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -437,12 +445,76 @@ export default function NewBillModal({ open, onClose, onBooked }) {
           </div>
         </div>
       )}
+
+      {/* Booking source confirmation */}
+      {confirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-2">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-800">Confirm Booking</h3>
+            <p className="mt-1 text-sm text-gray-500">Add any remarks and select the appointment source to continue.</p>
+
+            {/* Remarks */}
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-gray-600">Remarks</label>
+              <textarea
+                value={remarks}
+                maxLength={500}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={3}
+                placeholder="Any special instructions or notes..."
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y"
+              />
+              <div className="mt-1 text-right text-xs text-gray-400">{remarks.length} / 500</div>
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              {['Walk-in', 'Phone'].map((opt) => (
+                <label
+                  key={opt}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${
+                    source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="booking-source"
+                    value={opt}
+                    checked={source === opt}
+                    onChange={() => setSource(opt)}
+                    className="h-4 w-4 accent-indigo-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">{opt}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => { setConfirmOpen(false); setSource('Walk-in') }}
+                className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                   setConfirmOpen(false);
+                   handleBook();
+                }}
+                disabled={!source}
+                className="rounded-lg bg-[#4a7196] px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3d6083] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Confirm Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 // ---- All tab: summary of every guest ----
-function AllSummary({ guests, guestName, guestTotal, onOpen, onClient }) {
+function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscountAmount }) {
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {guests.map((g, idx) => (
@@ -485,6 +557,11 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient }) {
                   <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span className="font-medium text-gray-700">{r.name}</span>
                     <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tagStyle(r.typeLabel).pill}`}>{r.typeLabel}</span>
+                    {rowDiscountAmount && rowDiscountAmount(r) > 0 && (
+                      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                        Discount -{currency(rowDiscountAmount(r))}
+                      </span>
+                    )}
                     {r.kind === 'service' && (
                       <span className="text-[11px] text-gray-400">
                         <span className={r.stylist ? 'text-gray-500' : 'italic'}>{r.stylist || 'No stylist'}</span> · {r.date} · {r.time}
@@ -506,7 +583,7 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient }) {
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, total }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, total, rowDiscountAmount }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -648,7 +725,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     </div>
 
                     <div className="w-16 shrink-0 text-right text-sm font-bold text-gray-800">
-                      {currency((row.price || 0) * (row.qty || 1))}
+                      {currency(Math.max(0, (Number(row.price) || 0) * (row.qty || 1) - ((row.kind === 'service' || row.kind === 'product') ? 440 : 0)))}
                     </div>
 
                     <button onClick={() => onRemoveRow(row.uid)} className="flex shrink-0 items-center justify-center p-1 text-rose-400 hover:text-rose-600">
@@ -658,6 +735,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                 )
               })}
             </div>
+            
             <div className="mt-2 flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700">
               <span className="flex items-center gap-x-2 truncate whitespace-nowrap">
                 <span>Total {totalItems}</span>
@@ -665,7 +743,22 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                   <span className="font-normal text-gray-500">({typeBreakdown.join(', ')})</span>
                 )}
               </span>
-              <span className="text-indigo-600 mr-2">{currency(total)}</span>
+              <div className="flex items-center gap-6 mr-2">
+                {(() => {
+                  const guestGrossTotal = guest.rows.reduce((s, r) => s + ((Number(r.price) || 0) * (r.qty || 1)), 0);
+                  const guestDiscountTotal = guest.rows.reduce((s, r) => s + (rowDiscountAmount ? rowDiscountAmount(r) : 0), 0);
+                  if (guestDiscountTotal > 0) {
+                    return (
+                      <>
+                        <span className="text-gray-500 font-medium">Price: {currency(guestGrossTotal)}</span>
+                        <span className="text-emerald-600 font-medium">Disc: -{currency(guestDiscountTotal)}</span>
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
+                <span className="text-indigo-600 font-bold">Net: {currency(total)}</span>
+              </div>
             </div>
           </>
         )}
@@ -686,7 +779,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
 
 
 function CheckoutPanel({
-  subtotal,
+  subtotal, packageDiscount,
   manualDiscount, setManualDiscount,
   tip, setTip,
   paymentMode, setPaymentMode,
@@ -698,8 +791,7 @@ function CheckoutPanel({
   onSaveDraft, onPrintAndSave,
   disabled
 }) {
-  const packageDiscount = 0; // Placeholder for now
-  const md = Number(manualDiscount) || 0;
+    const md = Number(manualDiscount) || 0;
   const t = Number(tip) || 0;
 
   const totalSaved = packageDiscount + md;
@@ -751,6 +843,13 @@ function CheckoutPanel({
             </div>
           )}
         </div>
+
+        {totalSaved > 0 && (
+          <div className="flex justify-between items-center text-gray-800 font-medium pt-1 pb-1">
+            <span>After Disc.</span>
+            <span>{currency(afterDiscount)}</span>
+          </div>
+        )}
 
         <div className="flex justify-between items-center text-gray-600">
           <span className="flex items-center gap-1">
@@ -926,13 +1025,7 @@ function CheckoutPanel({
             {stylists.map(s => <option key={s.id}>{s.name}</option>)}
           </select>
 
-          <input
-            type="text"
-            placeholder="Remarks (optional)"
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 py-1.5 px-3 text-sm outline-none focus:border-indigo-400"
-          />
+          
 
 
         </div>

@@ -51,7 +51,11 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
   const [custAddOpen, setCustAddOpen] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
   const [takePayment, setTakePayment] = useState(false)
-  const [clientView, setClientView] = useState(null) // customer being viewed in ClientDetailsDrawer
+  const [clientView, setClientView] = useState(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [source, setSource] = useState('Walk-in')
+  const [remarks, setRemarks] = useState('')
+  const [confirmAction, setConfirmAction] = useState(null) // customer being viewed in ClientDetailsDrawer
   const [pendingSplit, setPendingSplit] = useState(null) // Rule 3 confirm: { gender, items, existingId, existingName }
   const navigate = useNavigate()
 
@@ -303,10 +307,10 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
 
             <div className="ml-auto flex flex-wrap items-center gap-3">
               <button onClick={onClose} className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button className="rounded-lg px-5 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50">Save as Waiting</button>
-              <button className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Save as Draft</button>
+              <button onClick={() => { setConfirmAction('waiting'); setConfirmOpen(true); }} className="rounded-lg px-5 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50">Save as Waiting</button>
+              <button onClick={() => { setConfirmAction('draft'); setConfirmOpen(true); }} className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Save as Draft</button>
               <button
-                onClick={takePayment ? handleBookAndPay : handleBook}
+                onClick={() => { setConfirmAction('book'); setConfirmOpen(true); }}
                 disabled={totalItems === 0}
                 className="rounded-lg bg-[#4a7196] px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3d6083] disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -363,6 +367,74 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
                 className="flex w-full items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
               >
                 <IconPlus width={15} height={15} /> Create a new guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking source confirmation */}
+      {confirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-2">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-800">Confirm Booking</h3>
+            <p className="mt-1 text-sm text-gray-500">Add any remarks and select the appointment source to continue.</p>
+
+            {/* Remarks */}
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-gray-600">Remarks</label>
+              <textarea
+                value={remarks}
+                maxLength={500}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={3}
+                placeholder="Any special instructions or notes..."
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y"
+              />
+              <div className="mt-1 text-right text-xs text-gray-400">{remarks.length} / 500</div>
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              {['Walk-in', 'Phone'].map((opt) => (
+                <label
+                  key={opt}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${
+                    source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="booking-source"
+                    value={opt}
+                    checked={source === opt}
+                    onChange={() => setSource(opt)}
+                    className="h-4 w-4 accent-indigo-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">{opt}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => { setConfirmOpen(false); setSource('Walk-in'); setConfirmAction(null); }}
+                className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                   setConfirmOpen(false);
+                   if (confirmAction === 'waiting' || confirmAction === 'draft') {
+                     onClose?.();
+                   } else if (confirmAction === 'book') {
+                     takePayment ? handleBookAndPay() : handleBook();
+                   }
+                }}
+                disabled={!source}
+                className="rounded-lg bg-[#4a7196] px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3d6083] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Confirm Booking
               </button>
             </div>
           </div>
