@@ -96,7 +96,7 @@ export default function RecentVisitsModal({ open, onClose, onRepeat }) {
         </div>
 
         {/* Scrollable list */}
-        <div className="flex-1 space-y-2.5 overflow-y-auto bg-gray-50/40 px-6 py-4">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 content-start overflow-y-auto bg-gray-50/40 px-6 py-4">
           {recentVisits.map((v, i) => (
             <VisitCard 
               key={v.id} 

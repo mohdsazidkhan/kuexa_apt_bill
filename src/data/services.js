@@ -158,6 +158,90 @@ export const recentVisits = [
       { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
     ],
   },
+  {
+    id: 'v6',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
+  {
+    id: 'v7',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
+  {
+    id: 'v8',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
+  {
+    id: 'v9',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
+  {
+    id: 'v10',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
+  {
+    id: 'v9',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
+  {
+    id: 'v10',
+    date: '28 Apr 2026',
+    time: '3:00 PM',
+    location: 'WorldMark sec 65',
+    status: 'Completed',
+    items: [
+      { name: 'Women Straight Hair Therapy', stylist: 'POONAM', price: 8000 },
+      { name: 'Female Blow Dry & Wash', stylist: 'POONAM', price: 900 },
+      { name: 'Female Bleach', stylist: 'SNEHA', price: 1500 },
+    ],
+  },
 ]
 
 export const membershipPlans = plans.filter((p) => p.type === 'Membership')
