@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import NewAppointmentModal from '../components/NewAppointmentModal'
+// import NewAppointmentModal from '../components/NewAppointmentModal'
 import GroupBookingModal from '../components/GroupBookingModal'
 import KanbanBoard from '../components/KanbanBoard'
 import TopBar from '../components/TopBar'
@@ -87,99 +87,98 @@ export default function Appointments() {
 
       {/* Fixed top section — header, tabs, filters */}
       <div className="shrink-0 px-4 pt-2">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-bold text-gray-800">Appointments</h1>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {statChips.map((s) => (
-              <span key={s.label} className={`flex items-center gap-1 rounded-full border bg-white px-2 py-0.5 text-xs font-medium ${s.color}`}>
-                <span className="font-bold">{s.value}</span> {s.label}
-              </span>
-            ))}
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-800">Appointments</h1>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {statChips.map((s) => (
+                <span key={s.label} className={`flex items-center gap-1 rounded-full border bg-white px-2 py-0.5 text-xs font-medium ${s.color}`}>
+                  <span className="font-bold">{s.value}</span> {s.label}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:bg-gray-50"><IconRefresh width={16} height={16} /></button>
-          <button
-            onClick={() => setGroupOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-[#3b5c7e] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#32506e]"
-          >
-            <IconPlus width={14} height={14} /> New Appointment
-          </button>
-        </div>
-      </div>
-
-      {/* View tabs */}
-      <div className="mt-1 flex flex-wrap items-center gap-1 border-b border-gray-200">
-        {views.map((v) => {
-          const Icon = v.icon
-          const on = v.key === view
-          return (
+          <div className="flex items-center gap-2">
+            <button className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:bg-gray-50"><IconRefresh width={16} height={16} /></button>
             <button
-              key={v.key}
-              onClick={() => setView(v.key)}
-              className={`-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors ${
-                on ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-800'
-              }`}
+              onClick={() => setGroupOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-[#3b5c7e] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#32506e]"
             >
-              <Icon width={14} height={14} /> {v.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Filter row */}
-      <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-100 bg-white p-2">
-        {dateFilters.map((f) => (
-          <Chip key={f.label} active={dateFilter === f.label} onClick={() => setDateFilter(f.label)} label={f.label} value={f.value} />
-        ))}
-        <span className="mx-0.5 h-4 w-px bg-gray-200" />
-        {statusFilters.map((f) => (
-          <Chip key={f.label} active={statusFilter === f.label} onClick={() => setStatusFilter(f.label)} label={f.label} value={f.value} />
-        ))}
-        <select className="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 outline-none">
-          <option>All stylists</option>
-        </select>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-gray-400">{appointments.length} shown</span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={scrollToTop}
-              title="Scroll to top"
-              className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
-            >
-              <IconArrowUp width={14} height={14} />
-            </button>
-            <button
-              onClick={scrollToBottom}
-              title="Scroll to bottom"
-              className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
-            >
-              <IconArrowDown width={14} height={14} />
+              <IconPlus width={14} height={14} /> New Appointment
             </button>
           </div>
         </div>
-      </div>
+
+        {/* View tabs */}
+        <div className="mt-1 flex flex-wrap items-center gap-1 border-b border-gray-200">
+          {views.map((v) => {
+            const Icon = v.icon
+            const on = v.key === view
+            return (
+              <button
+                key={v.key}
+                onClick={() => setView(v.key)}
+                className={`-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors ${on ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-800'
+                  }`}
+              >
+                <Icon width={14} height={14} /> {v.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Filter row */}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-100 bg-white p-2">
+          {dateFilters.map((f) => (
+            <Chip key={f.label} active={dateFilter === f.label} onClick={() => setDateFilter(f.label)} label={f.label} value={f.value} />
+          ))}
+          <span className="mx-0.5 h-4 w-px bg-gray-200" />
+          {statusFilters.map((f) => (
+            <Chip key={f.label} active={statusFilter === f.label} onClick={() => setStatusFilter(f.label)} label={f.label} value={f.value} />
+          ))}
+          <select className="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 outline-none">
+            <option>All stylists</option>
+          </select>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-400">{appointments.length} shown</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={scrollToTop}
+                title="Scroll to top"
+                className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+              >
+                <IconArrowUp width={14} height={14} />
+              </button>
+              <button
+                onClick={scrollToBottom}
+                title="Scroll to bottom"
+                className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+              >
+                <IconArrowDown width={14} height={14} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Scrollable cards/board section */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-1">
-      <div ref={topRef} />
-      {/* Body */}
-      <div className="mt-1">
-        {view === 'kanban' && <KanbanBoard appointments={appointments} />}
-        {view !== 'kanban' && (
-          <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white text-center">
-            <span className="text-lg font-semibold text-gray-700">{views.find((v) => v.key === view)?.label} view</span>
-            <span className="mt-1 text-sm text-gray-400">Coming soon — Kanban fully built.</span>
-          </div>
-        )}
-      </div>
-      <div ref={bottomRef} />
+        <div ref={topRef} />
+        {/* Body */}
+        <div className="mt-1">
+          {view === 'kanban' && <KanbanBoard appointments={appointments} />}
+          {view !== 'kanban' && (
+            <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white text-center">
+              <span className="text-lg font-semibold text-gray-700">{views.find((v) => v.key === view)?.label} view</span>
+              <span className="mt-1 text-sm text-gray-400">Coming soon — Kanban fully built.</span>
+            </div>
+          )}
+        </div>
+        <div ref={bottomRef} />
       </div>
 
-      <NewAppointmentModal open={open} onClose={() => setOpen(false)} onBooked={handleBooked} />
+      {/* <NewAppointmentModal open={open} onClose={() => setOpen(false)} onBooked={handleBooked} /> */}
       <GroupBookingModal
         open={groupOpen}
         onClose={() => setGroupOpen(false)}
@@ -193,9 +192,8 @@ function Chip({ active, onClick, label, value }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-        active ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-      }`}
+      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${active ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }`}
     >
       {label}
       <span className={`rounded px-1 text-[11px] font-semibold ${active ? 'bg-white/20' : 'bg-white text-gray-500'}`}>{value}</span>

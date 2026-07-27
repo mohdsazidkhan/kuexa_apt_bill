@@ -11,6 +11,7 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
   const [addOpen, setAddOpen] = useState(false)
   const [addInitial, setAddInitial] = useState({})
   const [promptedQuery, setPromptedQuery] = useState('')
+  const [confirmClient, setConfirmClient] = useState(null)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -31,7 +32,16 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
   }, [query])
 
   const pick = (c) => {
+    if (c.name.toLowerCase() === 'rajat katiyar') {
+      setConfirmClient(c)
+      return
+    }
+    proceedPick(c)
+  }
+
+  const proceedPick = (c) => {
     onChange?.(c)
+    setConfirmClient(null);
     setOpen(false)
     setQuery('')
   }
@@ -83,10 +93,35 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
   if (value) {
     return (
       <>
+        {confirmClient && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden p-6 text-center">
+              <p className="text-sm text-gray-600 mb-6">
+                Invoice <strong className="text-blue-600">BILL/000783/2025-26</strong>, <strong className="text-green-600">APP/25-26/002369</strong> already created for Rajat Katiyar Today. Do you still wish to continue for Rajat Katiyar?
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => setConfirmClient(null)}
+                  className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
+                >
+                  No
+                </button>
+                <button
+                  onClick={() => proceedPick(confirmClient)}
+                  className="px-6 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full"
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex h-[34px] items-center justify-between rounded-md border border-gray-200 bg-white px-3">
           <span className="flex items-center gap-2 text-sm font-medium text-gray-800">
             <IconUsers width={16} height={16} className="text-gray-400" />
             {value.name}
+            {value.gender && <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">{value.gender}</span>}
+            {value.phone && <span className="text-[11px] font-semibold text-gray-600">{value.phone}</span>}
           </span>
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-emerald-600">Selected</span>
@@ -103,7 +138,30 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
   // Search state
   return (
     <div>
-      <div className="relative">
+      <div className="relative w-full">
+        {confirmClient && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden p-6 text-center">
+              <p className="text-sm text-gray-600 mb-6">
+                Invoice <a href="#" className="font-bold text-blue-600">BILL/000783/2025-26</a>, <a href="#" className="font-bold text-green-600">APP/25-26/002369</a> already created for Rajat Katiyar Today. Do you still wish to continue for Rajat Katiyar?
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => setConfirmClient(null)}
+                  className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
+                >
+                  No
+                </button>
+                <button
+                  onClick={() => proceedPick(confirmClient)}
+                  className="px-6 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full"
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <IconSearch width={16} height={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           ref={inputRef}

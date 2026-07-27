@@ -268,7 +268,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto bg-gray-50/40 p-4">
+        <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-4">
           {showAll ? (
             <AllSummary guests={guests} guestName={guestName} guestTotal={guestTotal} onOpen={setActive} onClient={setClientView} />
           ) : (
@@ -555,12 +555,6 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             label={
               <span className="inline-flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1"><IconUsers width={13} height={13} /> Customer</span>
-                {guest.customer && (
-                  <>
-                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">{guest.customer.gender}</span>
-                    <span className="text-[10px] font-normal text-gray-500">{guest.customer.phone}</span>
-                  </>
-                )}
               </span>
             }
           >

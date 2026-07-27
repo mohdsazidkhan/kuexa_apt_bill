@@ -6,6 +6,8 @@ import AddCustomerModal from './AddCustomerModal'
 import RecentVisitsModal from './RecentVisitsModal'
 import ClientDetailsDrawer from './ClientDetailsDrawer'
 import AddFnFDrawer from './AddFnFDrawer'
+import ViewOffersDrawer from './ViewOffersDrawer'
+import ProductBatchesModal from './ProductBatchesModal'
 import { currency, stylists } from '../data/services'
 import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
@@ -54,6 +56,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [recentOpen, setRecentOpen] = useState(false)
   const [takePayment, setTakePayment] = useState(false)
   const [clientView, setClientView] = useState(null) // customer being viewed in ClientDetailsDrawer
+  const [offersView, setOffersView] = useState(null)
   const [pendingSplit, setPendingSplit] = useState(null) // Rule 3 confirm: { gender, items, existingId, existingName }
   const [manualDiscount, setManualDiscount] = useState('')
   const [tip, setTip] = useState('')
@@ -63,6 +66,10 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
   const [addFnFOpen, setAddFnFOpen] = useState(false)
+  const [offersApplied, setOffersApplied] = useState(false)
+  const [batchProduct, setBatchProduct] = useState(null)
+  const [pendingPaymentAction, setPendingPaymentAction] = useState(null)
+  const [batchesSelected, setBatchesSelected] = useState(false)
   const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
@@ -195,6 +202,22 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const handleBook = () => {
     onBooked?.(guests.length)
   }
+  const handleClearAll = () => {
+    const initialGuest = newGuest()
+    setGuests([initialGuest])
+    setActive(initialGuest.id)
+    setBrowseFor(null)
+    setRestrictedTab(null)
+    setTakePayment(false)
+    setManualDiscount('')
+    setTip('')
+    setPaymentMode('Cash')
+    setSplitPayment(false)
+    setSplitRows([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
+    setSaleBy('')
+    setRemarks('')
+    setOffersApplied(false)
+  }
   const handleBookAndPay = () => {
     onClose?.()
     navigate('/billing')
@@ -205,6 +228,24 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const currentNetTotal = Math.round(Math.max(0, grandTotal - (Number(manualDiscount) || 0)) * 1.18 + (Number(tip) || 0));
   const totalSplit = splitRows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
   const isBalanced = totalSplit === currentNetTotal;
+
+  const hasService = guests.some(g => g.rows.some(r => r.kind === 'service' || r.type === 'Service' || r.typeLabel === 'Service'))
+  const hasProduct = guests.some(g => g.rows.some(r => r.kind === 'product' || r.type === 'Product' || r.typeLabel === 'Product'))
+  const showSplitAndPayment = (hasService && hasProduct) || guests.length > 1
+
+  const handlePaymentClick = (action) => {
+    if (hasProduct && !batchesSelected) {
+      const prodItem = guests.flatMap(g => g.rows).find(it => (it.kind === 'product' || it.type === 'Product' || it.typeLabel === 'Product' || (it.name && it.name.includes('Treatment'))))
+      setBatchProduct(prodItem || { name: 'Dummy Product' })
+      setPendingPaymentAction(action)
+    } else {
+      if (action === 'split') {
+        setSplitPayment(!splitPayment)
+      } else {
+        handleBook()
+      }
+    }
+  }
 
   return (
     <>
@@ -265,10 +306,10 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto bg-gray-50/40 p-4">
+        <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-4">
           {showAll ? (
             <div className="space-y-4">
-              <AllSummary guests={guests} guestName={guestName} guestTotal={guestTotal} onOpen={setActive} onClient={setClientView} rowDiscountAmount={rowDiscountAmount} />
+              <AllSummary guests={guests} guestName={guestName} guestTotal={guestTotal} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
 
               <CheckoutPanel
                 subtotal={grossTotal}
@@ -303,7 +344,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                 setRestrictedTab(typeof tab === 'string' ? tab : null)
                 setBrowseFor(activeGuest.id)
               }}
-              onClientDetails={() => setClientView(activeGuest.customer)}
+              onViewOffers={() => setOffersView(activeGuest.customer)}
               onAddFnF={() => setAddFnFOpen(true)}
               total={guestTotal(activeGuest)}
               rowDiscountAmount={rowDiscountAmount}
@@ -323,7 +364,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               </div>
 
               <div className="hidden lg:flex items-center gap-5 ml-6">
-                <button className="flex items-center gap-1.5 text-sm font-medium text-amber-500 hover:text-amber-600">
+                <button className="flex items-center gap-1.5 rounded-full border-2 border-amber-200 px-4 py-1 text-sm font-medium text-amber-600 hover:bg-amber-50 hover:text-amber-700">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
                   Hold
                 </button>
@@ -331,28 +372,35 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                   Held Sales
                 </button>
-                <button className="text-sm font-medium text-teal-500 hover:text-teal-600">
-                  Apply Offers
+                <button
+                  onClick={() => setOffersApplied(!offersApplied)}
+                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-1 text-sm font-medium ${offersApplied
+                    ? 'border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700'
+                    : 'border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700'
+                    }`}
+                >
+                  {offersApplied ? 'Remove Offers' : 'Apply Offers'}
                 </button>
-                <button className="flex items-center gap-1.5 text-sm font-medium text-rose-500 hover:text-rose-600">
+                <button onClick={handleClearAll} className="flex items-center gap-1.5 rounded-full border-2 border-rose-200 px-4 py-1 text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                   Clear all
                 </button>
               </div>
 
-              <div className="flex flex-1 max-w-md gap-3 ml-auto">
+              <div className="flex flex-1 max-w-lg gap-3 ml-auto">
+                {showSplitAndPayment && (
+                  <button
+                    onClick={() => handlePaymentClick('split')}
+                    className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow hover:bg-[#1a3551] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Split & Payment
+                  </button>
+                )}
                 <button
-                  onClick={onSaveDraft || onClose}
-                  className="flex-[1] rounded-lg border-2 border-indigo-400 py-2 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  onClick={() => handlePaymentClick('pay')}
+                  className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Save Draft
-                </button>
-                <button
-                  onClick={handleBook}
-                  disabled={totalItems === 0 || (splitPayment && !isBalanced)}
-                  className="flex-[3] rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  ✓ Print & Save
+                  Payment
                 </button>
               </div>
             </div>
@@ -366,7 +414,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               </div>
 
               <div className="hidden lg:flex items-center gap-5 ml-6">
-                <button className="flex items-center gap-1.5 text-sm font-medium text-amber-500 hover:text-amber-600">
+                <button className="flex items-center gap-1.5 rounded-full border-2 border-amber-200 px-4 py-1 text-sm font-medium text-amber-600 hover:bg-amber-50 hover:text-amber-700">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
                   Hold
                 </button>
@@ -374,28 +422,36 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                   Held Sales
                 </button>
-                <button className="text-sm font-medium text-teal-500 hover:text-teal-600">
-                  Apply Offers
+                <button
+                  onClick={() => setOffersApplied(!offersApplied)}
+                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-1 text-sm font-medium ${offersApplied
+                    ? 'border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700'
+                    : 'border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700'
+                    }`}
+                >
+                  {offersApplied ? 'Remove Offers' : 'Apply Offers'}
                 </button>
-                <button className="flex items-center gap-1.5 text-sm font-medium text-rose-500 hover:text-rose-600">
+                <button onClick={handleClearAll} className="flex items-center gap-1.5 rounded-full border-2 border-rose-200 px-4 py-1 text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                   Clear all
                 </button>
               </div>
 
-              <div className="flex flex-1 max-w-md gap-3 ml-auto">
+              <div className="flex flex-1 max-w-lg gap-3 ml-auto">
+
+                {showSplitAndPayment && (
+                  <button
+                    disabled
+                    className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Split & Payment
+                  </button>
+                )}
                 <button
-                  onClick={onSaveDraft || onClose}
-                  className="flex-[1] rounded-lg border-2 border-indigo-400 py-2 text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  disabled
+                  className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Save Draft
-                </button>
-                <button
-                  onClick={handleBook}
-                  disabled={totalItems === 0 || (splitPayment && !isBalanced)}
-                  className="flex-[3] rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  ✓ Print & Save
+                  Payment
                 </button>
               </div>
             </div>
@@ -416,8 +472,25 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         onClose={() => setCustAddOpen(false)}
         onAdd={(c) => activeGuest && patchGuest(activeGuest.id, { customer: c })}
       />
+      <ProductBatchesModal
+        open={!!batchProduct}
+        product={batchProduct}
+        onClose={() => setBatchProduct(null)}
+        onSubmit={(qtys) => {
+          console.log('Quantities submitted', qtys)
+          setBatchProduct(null)
+          setBatchesSelected(true)
+          if (pendingPaymentAction === 'split') {
+            setSplitPayment(!splitPayment)
+          } else if (pendingPaymentAction === 'pay') {
+            // User requested that the New Bill drawer stays open after batch selection.
+            // When they click Payment again, it will bypass this modal (since batchesSelected is true) and call handleBook().
+          }
+        }}
+      />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
+      <ViewOffersDrawer open={!!offersView} onClose={() => setOffersView(null)} customer={offersView} />
       <AddFnFDrawer open={addFnFOpen} onClose={() => setAddFnFOpen(false)} primaryCustomer={activeGuest?.customer} />
 
       {/* Confirm — matching-gender guest(s) exist: pick a client or make a new guest */}
@@ -461,7 +534,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 }
 
 // ---- All tab: summary of every guest ----
-function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscountAmount }) {
+function AllSummary({ guests, guestName, guestTotal, onOpen, onViewOffers, rowDiscountAmount }) {
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {guests.map((g, idx) => (
@@ -486,7 +559,7 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscou
               {g.customer?.phone && <span className="text-xs text-gray-400">{g.customer.phone}</span>}
               {g.customer && (
                 <button
-                  onClick={() => onClient?.(g.customer)}
+                  onClick={() => onViewOffers?.(g.customer)}
                   className="ml-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 hover:bg-indigo-100"
                 >
                   View offers
@@ -542,7 +615,7 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscou
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, onAddFnF, total, rowDiscountAmount, open }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, total, rowDiscountAmount, open }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -573,61 +646,46 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             label={
               <span className="inline-flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1"><IconUsers width={13} height={13} /> Customer</span>
-                {guest.customer && (
-                  <>
-                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">{guest.customer.gender}</span>
-                    <span className="text-[10px] font-normal text-gray-500">{guest.customer.phone}</span>
-                    <button
-                      onClick={onClientDetails}
-                      className="ml-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 hover:bg-indigo-100"
-                    >
-                      View offers
-                    </button>
-                    <button
-                      onClick={onAddFnF}
-                      className="ml-1 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600 hover:bg-emerald-100"
-                    >
-                      Add to F&F
-                    </button>
-                    <select
-                      className="ml-1 max-w-[75px] truncate rounded border border-gray-200 bg-white px-1 py-0.5 text-[9px] font-medium text-gray-600 outline-none hover:bg-gray-50"
-                      value=""
-                      onChange={(e) => {
-                        // Dummy behavior for selecting an F&F member
-                      }}
-                    >
-                      <option value="" disabled>Select F&F</option>
-                      <option value="f1">Wife (Aarti)</option>
-                      <option value="f2">Son (Rahul)</option>
-                      <option value="f3">Daughter (Priya)</option>
-                    </select>
-                  </>
-                )}
               </span>
             }
           >
             <CustomerSearch autoFocus={true} focusTrigger={open} value={guest.customer} onChange={onCustomer} />
           </Field>
 
-          <Field label="Date" required>
-            <SearchSelect value={guest.date} onChange={(v) => onPatch({ date: v })} options={FUTURE_DATES} searchPlaceholder="Search date..." />
-          </Field>
-
-          <Field label="Time" required>
-            <SearchSelect value={guest.time} onChange={(v) => onPatch({ time: v })} options={TIME_SLOTS} searchPlaceholder="Search time..." />
-          </Field>
-
-          <Field label={<span className="inline-flex items-center gap-1"><IconHome width={13} height={13} /> Home Service</span>}>
-            <button
-              onClick={() => onPatch({ homeService: !guest.homeService })}
-              className="flex h-[34px] w-full items-center gap-2 rounded-md border border-gray-200 bg-white px-2"
-            >
-              <span className={`relative h-4 w-8 shrink-0 rounded-full transition-colors ${guest.homeService ? 'bg-indigo-600' : 'bg-gray-300'}`}>
-                <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${guest.homeService ? 'left-[18px]' : 'left-0.5'}`} />
-              </span>
-              <span className="truncate text-xs text-gray-600">{guest.homeService ? 'Yes — Home' : 'No — Salon'}</span>
-            </button>
-          </Field>
+          {guest.customer && (
+            <>
+              <Field label="&nbsp;">
+                <button
+                  onClick={onViewOffers}
+                  className="flex h-[34px] w-full items-center justify-center rounded-md border border-indigo-200 bg-indigo-50 px-2 text-xs font-bold text-indigo-600 hover:bg-indigo-100"
+                >
+                  View offers
+                </button>
+              </Field>
+              <Field label="&nbsp;">
+                <button
+                  onClick={onAddFnF}
+                  className="flex h-[34px] w-full items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100"
+                >
+                  Add to F&F
+                </button>
+              </Field>
+              <Field label="&nbsp;">
+                <select
+                  className="flex h-[34px] w-full rounded-md border border-gray-200 bg-white px-2 text-xs font-medium text-gray-600 outline-none hover:bg-gray-50"
+                  value=""
+                  onChange={(e) => {
+                    // Dummy behavior for selecting an F&F member
+                  }}
+                >
+                  <option value="" disabled>Select F&F</option>
+                  <option value="f1">Wife (Aarti)</option>
+                  <option value="f2">Son (Rahul)</option>
+                  <option value="f3">Daughter (Priya)</option>
+                </select>
+              </Field>
+            </>
+          )}
 
         </div>
       </section>
@@ -640,7 +698,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="pb-4">
               <div className="flex items-center gap-2.5 px-2 pb-2 text-[11px] font-bold text-black min-w-[950px]">
                 <div className="w-48 shrink-0">Service / Item</div>
                 <div className="w-32 shrink-0 text-center">Stylist</div>
