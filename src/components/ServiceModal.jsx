@@ -98,7 +98,7 @@ export default function ServiceModal({ open, onClose, onAdd, restrictedTab }) {
                   <button
                     key={t.key}
                     onClick={() => setTab(t.key)}
-                    className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${on ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100'
+                    className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${on ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                   >
                     <Icon width={16} height={16} /> {t.label}

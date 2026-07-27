@@ -546,11 +546,8 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
                             {row.kind === 'service' ? (
                               <>
                                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                                  <span className="truncate text-sm font-semibold text-gray-800">
+                                  <span className="text-sm font-semibold text-gray-800">
                                     {row.name || <span className="font-normal text-gray-400">—</span>}
-                                  </span>
-                                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>
-                                    {row.typeLabel || meta.label}
                                   </span>
                                 </div>
                                 <div className="w-16 shrink-0">
@@ -581,16 +578,8 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
                             ) : (
                               <>
                                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                                  <span className="truncate text-sm font-semibold text-gray-800">{row.name}</span>
-                                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>
-                                    {row.typeLabel || meta.label}
-                                  </span>
+                                  <span className="text-sm font-semibold text-gray-800">{row.name}</span>
                                 </div>
-                                <span className="w-16 shrink-0" />
-                                <span className="w-36 shrink-0" />
-                                <span className="w-36 shrink-0" />
-                                <span className="w-28 shrink-0" />
-                                <span className="w-24 shrink-0" />
                                 <div className="w-24 shrink-0 text-sm font-semibold text-gray-800">{currency(row.price)}</div>
                               </>
                             )}
@@ -649,25 +638,25 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
               )}
               <button
                 onClick={() => { setRestrictedTab('services'); setModalOpen(true); }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-100 py-3.5 text-sm font-medium text-indigo-700 hover:bg-indigo-200"
               >
                 Add Services
               </button>
               <button
                 onClick={() => { setRestrictedTab('products'); setModalOpen(true); }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-100 py-3.5 text-sm font-medium text-emerald-700 hover:bg-emerald-200"
               >
                 Add Products
               </button>
               <button
                 onClick={() => { setRestrictedTab('plans'); setModalOpen(true); }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-100 py-3.5 text-sm font-medium text-rose-700 hover:bg-rose-200"
               >
                 Add Offers
               </button>
               <button
                 onClick={() => { setRestrictedTab(null); setModalOpen(true); }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-100 py-3.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
               >
                 <IconGrid width={18} height={18} /> Browse All
               </button>
@@ -795,8 +784,7 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
                     <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${m.dot}`}>
                       {idx + 1}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">{row.name}</span>
-                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${m.pill}`}>{tag}</span>
+                    <span className="min-w-0 flex-1 text-sm font-medium text-gray-800">{row.name}</span>
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         onClick={() => moveRow(idx, -1)}

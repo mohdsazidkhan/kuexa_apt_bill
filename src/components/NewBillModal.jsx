@@ -590,7 +590,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                       Add to F&F
                     </button>
                     <select
-                      className="ml-1 max-w-[100px] truncate rounded border border-gray-200 bg-white px-1 py-0.5 text-[9px] font-medium text-gray-600 outline-none hover:bg-gray-50"
+                      className="ml-1 max-w-[75px] truncate rounded border border-gray-200 bg-white px-1 py-0.5 text-[9px] font-medium text-gray-600 outline-none hover:bg-gray-50"
                       value=""
                       onChange={(e) => {
                         // Dummy behavior for selecting an F&F member
@@ -689,28 +689,26 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     return (
                       <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border p-1 shadow-sm ${meta.card}`}>
                         {/* Item */}
-                        <div className="w-48 shrink-0 flex items-center gap-2 pl-1">
+                        <div className={`${row.kind === 'service' ? 'w-48' : 'w-[20.625rem]'} shrink-0 flex items-center gap-2 pl-1`}>
                           <span title={`${meta.label} ${rowNum}`} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${meta.dot}`}>
                             {rowNum}
                           </span>
                           <span className="flex min-w-0 flex-1 items-center gap-1.5" title={row.name}>
-                            <span className="truncate text-sm font-semibold text-gray-800">{row.name}</span>
-                            <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>{meta.label}</span>
-                            {row.kind === 'service' && <GenderBadge name={row.name} />}
+                            <span className="text-sm font-semibold text-gray-800">{row.name}</span>
                           </span>
                         </div>
 
                         {/* Stylist */}
-                        <div className="w-32 shrink-0">
-                          {row.kind === 'service' && (
+                        {row.kind === 'service' && (
+                          <div className="w-32 shrink-0">
                             <StylistSelect
                               value={row.stylist}
                               onChange={(v) => onRow(row.uid, { stylist: v })}
                               placeholder="Select Stylist"
                               className="!rounded-full !h-[26px] !py-0 !text-[11px]"
                             />
-                          )}
-                        </div>
+                          </div>
+                        )}
 
                         {/* Sale By */}
                         <div className="w-24 shrink-0">
@@ -911,25 +909,25 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
         <div className="mt-4 flex gap-3">
           <button
             onClick={() => onBrowse('services')}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-100 py-3.5 text-sm font-medium text-indigo-700 hover:bg-indigo-200"
           >
             Add Services
           </button>
           <button
             onClick={() => onBrowse('products')}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-100 py-3.5 text-sm font-medium text-emerald-700 hover:bg-emerald-200"
           >
             Add Products
           </button>
           <button
             onClick={() => onBrowse('plans')}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-100 py-3.5 text-sm font-medium text-rose-700 hover:bg-rose-200"
           >
             Add Offers
           </button>
           <button
             onClick={() => onBrowse()}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-100 py-3.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
           >
             <IconGrid width={18} height={18} /> Browse All
           </button>
