@@ -115,7 +115,7 @@ function Card({ appt, showBill = true }) {
       {/* Actions */}
       <div className="mt-2 space-y-2">
         {appt.column === 'scheduled' && (
-          <ActionBtn variant="primary" className="w-full">✓ Confirm</ActionBtn>
+          <ActionBtn variant="primary" className="w-full">✓ Check In</ActionBtn>
         )}
         {appt.column === 'checkedin' && (
           <div className="grid grid-cols-2 gap-2">

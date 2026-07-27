@@ -48,6 +48,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
   const [guests, setGuests] = useState(() => [newGuest()])
   const [active, setActive] = useState(() => guests[0]?.id)
   const [browseFor, setBrowseFor] = useState(null) // guestId while Browse modal is open
+  const [restrictedTab, setRestrictedTab] = useState(null)
   const [custAddOpen, setCustAddOpen] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
   const [takePayment, setTakePayment] = useState(false)
@@ -278,13 +279,15 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
               guestName={guestName}
               onCustomer={(c) => {
                 patchGuest(activeGuest.id, { customer: c });
-                if (c) setBrowseFor(activeGuest.id);
               }}
               onPatch={(patch) => patchGuest(activeGuest.id, patch)}
               onRecent={() => setRecentOpen(true)}
               onRow={(uid, patch) => patchRow(activeGuest.id, uid, patch)}
               onRemoveRow={(uid) => removeRow(activeGuest.id, uid)}
-              onBrowse={() => setBrowseFor(activeGuest.id)}
+              onBrowse={(tab) => {
+                setRestrictedTab(typeof tab === 'string' ? tab : null)
+                setBrowseFor(activeGuest.id)
+              }}
               total={guestTotal(activeGuest)}
             />
           )}
@@ -330,6 +333,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
       {/* Browse to add items to a guest */}
       <ServiceModal
         open={!!browseFor}
+        restrictedTab={restrictedTab}
         onClose={() => setBrowseFor(null)}
         onAdd={(items) => { if (browseFor) addRows(browseFor, items) }}
       />
@@ -339,9 +343,9 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
         onClose={() => setCustAddOpen(false)}
         onAdd={(c) => activeGuest && patchGuest(activeGuest.id, { customer: c })}
       />
-      <RecentVisitsModal 
-        open={recentOpen} 
-        onClose={() => setRecentOpen(false)} 
+      <RecentVisitsModal
+        open={recentOpen}
+        onClose={() => setRecentOpen(false)}
         onRepeat={(visit, repeatType) => {
           if (activeGuest) {
             const mappedItems = visit.items.map(it => ({
@@ -600,7 +604,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
       <section className="rounded-xl border border-gray-200 bg-white p-4">
         {guest.rows.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
-            No items yet — use <span className="font-medium text-gray-500">Browse Select Items</span> below.
+            No items yet — use <span className="font-medium text-gray-500">Use Bellow Buttons</span> to add services, products or offers.
           </div>
         ) : (
           <>
@@ -682,10 +686,28 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
         {/* Browse */}
         <div className="mt-4 flex gap-3">
           <button
-            onClick={onBrowse}
+            onClick={() => onBrowse('services')}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
           >
-            <IconGrid width={18} height={18} /> Browse Select Items
+            Add Services
+          </button>
+          <button
+            onClick={() => onBrowse('products')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Add Products
+          </button>
+          <button
+            onClick={() => onBrowse('plans')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Add Offers
+          </button>
+          <button
+            onClick={() => onBrowse()}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            <IconGrid width={18} height={18} /> Browse All
           </button>
         </div>
       </section>

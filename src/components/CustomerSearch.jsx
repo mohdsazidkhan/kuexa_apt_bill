@@ -108,7 +108,14 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
         <input
           ref={inputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (isPhoneQuery(val)) {
+              const digits = val.replace(/\D/g, '');
+              if (digits.length > 10) return;
+            }
+            setQuery(val);
+          }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Search by name or phone..."

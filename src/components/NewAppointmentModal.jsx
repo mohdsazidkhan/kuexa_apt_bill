@@ -293,6 +293,7 @@ const tagStyle = (tag) => tagMeta[tag] ?? tagMeta.Service
 
 export default function NewAppointmentModal({ open, onClose, onBooked }) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [restrictedTab, setRestrictedTab] = useState(null)
   const [recentOpen, setRecentOpen] = useState(false)
   const [homeService, setHomeService] = useState(false)
   const [takePayment, setTakePayment] = useState(false)
@@ -465,7 +466,6 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
                   value={customer}
                   onChange={(c) => {
                     setCustomer(c);
-                    if (c) setModalOpen(true);
                   }}
                 />
               </Field>
@@ -512,7 +512,7 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
             <div className="mt-0">
               {rows.length === 0 ? (
                 <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
-                  No items added yet — use <span className="font-medium text-gray-500">Browse Select Items</span> below to add services, products or plans.
+                  No items added yet — use <span className="font-medium text-gray-500">Use Bellow Buttons</span> to add services, products or offers.
                 </div>
               ) : (
                 <>
@@ -648,10 +648,28 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
                 </button>
               )}
               <button
-                onClick={() => setModalOpen(true)}
+                onClick={() => { setRestrictedTab('services'); setModalOpen(true); }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
               >
-                <IconGrid width={18} height={18} /> Browse Select Items
+                Add Services
+              </button>
+              <button
+                onClick={() => { setRestrictedTab('products'); setModalOpen(true); }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Add Products
+              </button>
+              <button
+                onClick={() => { setRestrictedTab('plans'); setModalOpen(true); }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Add Offers
+              </button>
+              <button
+                onClick={() => { setRestrictedTab(null); setModalOpen(true); }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                <IconGrid width={18} height={18} /> Browse All
               </button>
             </div>
           </section>
@@ -723,10 +741,10 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
         </div>
       </div>
 
-      <ServiceModal open={modalOpen} onClose={() => setModalOpen(false)} onAdd={handleModalAdd} />
-      <RecentVisitsModal 
-        open={recentOpen} 
-        onClose={() => setRecentOpen(false)} 
+      <ServiceModal open={modalOpen} restrictedTab={restrictedTab} onClose={() => setModalOpen(false)} onAdd={handleModalAdd} />
+      <RecentVisitsModal
+        open={recentOpen}
+        onClose={() => setRecentOpen(false)}
         onRepeat={(visit, repeatType) => {
           const mappedItems = visit.items.map(it => ({
             uid: crypto.randomUUID(),

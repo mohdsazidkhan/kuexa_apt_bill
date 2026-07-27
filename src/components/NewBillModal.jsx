@@ -5,6 +5,7 @@ import CustomerSearch from './CustomerSearch'
 import AddCustomerModal from './AddCustomerModal'
 import RecentVisitsModal from './RecentVisitsModal'
 import ClientDetailsDrawer from './ClientDetailsDrawer'
+import AddFnFDrawer from './AddFnFDrawer'
 import { currency, stylists } from '../data/services'
 import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
@@ -48,6 +49,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [guests, setGuests] = useState(() => [newGuest()])
   const [active, setActive] = useState(() => guests[0]?.id)
   const [browseFor, setBrowseFor] = useState(null) // guestId while Browse modal is open
+  const [restrictedTab, setRestrictedTab] = useState(null)
   const [custAddOpen, setCustAddOpen] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
   const [takePayment, setTakePayment] = useState(false)
@@ -60,6 +62,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [splitRows, setSplitRows] = useState([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
   const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
+  const [addFnFOpen, setAddFnFOpen] = useState(false)
   const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
@@ -290,15 +293,18 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               guest={activeGuest}
               guestName={guestName}
               onCustomer={(c) => {
-                patchGuest(activeGuest.id, { customer: c });
-                if (c) setBrowseFor(activeGuest.id);
+                patchGuest(activeGuest.id, { customer: c })
               }}
               onPatch={(patch) => patchGuest(activeGuest.id, patch)}
               onRecent={() => setRecentOpen(true)}
               onRow={(uid, patch) => patchRow(activeGuest.id, uid, patch)}
               onRemoveRow={(uid) => removeRow(activeGuest.id, uid)}
-              onBrowse={() => setBrowseFor(activeGuest.id)}
+              onBrowse={(tab) => {
+                setRestrictedTab(typeof tab === 'string' ? tab : null)
+                setBrowseFor(activeGuest.id)
+              }}
               onClientDetails={() => setClientView(activeGuest.customer)}
+              onAddFnF={() => setAddFnFOpen(true)}
               total={guestTotal(activeGuest)}
               rowDiscountAmount={rowDiscountAmount}
             />
@@ -400,6 +406,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
       {/* Browse to add items to a guest */}
       <ServiceModal
         open={!!browseFor}
+        restrictedTab={restrictedTab}
         onClose={() => setBrowseFor(null)}
         onAdd={(items) => { if (browseFor) addRows(browseFor, items) }}
       />
@@ -411,6 +418,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
       />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
+      <AddFnFDrawer open={addFnFOpen} onClose={() => setAddFnFOpen(false)} primaryCustomer={activeGuest?.customer} />
 
       {/* Confirm — matching-gender guest(s) exist: pick a client or make a new guest */}
       {pendingSplit && (
@@ -534,7 +542,7 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscou
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, total, rowDiscountAmount, open }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, onAddFnF, total, rowDiscountAmount, open }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -575,6 +583,24 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     >
                       View offers
                     </button>
+                    <button
+                      onClick={onAddFnF}
+                      className="ml-1 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600 hover:bg-emerald-100"
+                    >
+                      Add to F&F
+                    </button>
+                    <select
+                      className="ml-1 max-w-[100px] truncate rounded border border-gray-200 bg-white px-1 py-0.5 text-[9px] font-medium text-gray-600 outline-none hover:bg-gray-50"
+                      value=""
+                      onChange={(e) => {
+                        // Dummy behavior for selecting an F&F member
+                      }}
+                    >
+                      <option value="" disabled>Select F&F</option>
+                      <option value="f1">Wife (Aarti)</option>
+                      <option value="f2">Son (Rahul)</option>
+                      <option value="f3">Daughter (Priya)</option>
+                    </select>
                   </>
                 )}
               </span>
@@ -603,16 +629,6 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             </button>
           </Field>
 
-          {guest.customer && (
-            <Field label={<span className="invisible">Recent</span>}>
-              <button
-                onClick={onRecent}
-                className="h-[34px] w-full rounded-md border border-gray-200 bg-white px-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-              >
-                Recent Visits
-              </button>
-            </Field>
-          )}
         </div>
       </section>
 
@@ -620,7 +636,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
       <section className="rounded-xl border border-gray-200 bg-white p-4">
         {guest.rows.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
-            No items yet — use <span className="font-medium text-gray-500">Browse Select Items</span> below.
+            No items yet — use <span className="font-medium text-gray-500">Use Bellow Buttons</span> to add services, products or offers.
           </div>
         ) : (
           <>
@@ -894,10 +910,28 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
         {/* Browse */}
         <div className="mt-4 flex gap-3">
           <button
-            onClick={onBrowse}
+            onClick={() => onBrowse('services')}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
           >
-            <IconGrid width={18} height={18} /> Browse Select Items
+            Add Services
+          </button>
+          <button
+            onClick={() => onBrowse('products')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Add Products
+          </button>
+          <button
+            onClick={() => onBrowse('plans')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Add Offers
+          </button>
+          <button
+            onClick={() => onBrowse()}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            <IconGrid width={18} height={18} /> Browse All
           </button>
         </div>
       </section>
