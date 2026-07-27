@@ -104,7 +104,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
         pendGender = sg
       } else if (differentGender) {
         // no matching-gender guest yet -> auto-create one (reused for this add)
-        ;(createdByGender[sg] ||= makeGuest(sg)).rows.push(row)
+        ; (createdByGender[sg] ||= makeGuest(sg)).rows.push(row)
       } else {
         cur.rows.push(row) // same gender, not a duplicate -> current guest
       }
@@ -140,12 +140,14 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
     setGuests((gs) => gs.map((g) => {
       if (g.id !== gid) return g
       let i = 0
-      return { ...g, rows: g.rows.map((r) => {
-        if (r.kind !== 'service') return r
-        const stylist = stylists[i % stylists.length].name
-        i += 1
-        return { ...r, stylist }
-      }) }
+      return {
+        ...g, rows: g.rows.map((r) => {
+          if (r.kind !== 'service') return r
+          const stylist = stylists[i % stylists.length].name
+          i += 1
+          return { ...r, stylist }
+        })
+      }
     }))
 
   // Auto-sequence a guest's items by type order.
@@ -271,9 +273,13 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
           ) : (
             <GuestEditor
               key={activeGuest.id}
+              open={open}
               guest={activeGuest}
               guestName={guestName}
-              onCustomer={(c) => patchGuest(activeGuest.id, { customer: c })}
+              onCustomer={(c) => {
+                patchGuest(activeGuest.id, { customer: c });
+                if (c) setBrowseFor(activeGuest.id);
+              }}
               onPatch={(patch) => patchGuest(activeGuest.id, patch)}
               onRecent={() => setRecentOpen(true)}
               onRow={(uid, patch) => patchRow(activeGuest.id, uid, patch)}
@@ -333,7 +339,26 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
         onClose={() => setCustAddOpen(false)}
         onAdd={(c) => activeGuest && patchGuest(activeGuest.id, { customer: c })}
       />
-      <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
+      <RecentVisitsModal 
+        open={recentOpen} 
+        onClose={() => setRecentOpen(false)} 
+        onRepeat={(visit, repeatType) => {
+          if (activeGuest) {
+            const mappedItems = visit.items.map(it => ({
+              uid: crypto.randomUUID(),
+              kind: 'service',
+              name: it.name,
+              price: it.price,
+              duration: '30',
+              stylist: repeatType === 'Appointment' ? (it.stylist || '') : '',
+              assistants: '',
+              date: activeGuest.date,
+              time: activeGuest.time,
+            }))
+            addRows(activeGuest.id, mappedItems)
+          }
+        }}
+      />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
 
       {/* Confirm — matching-gender guest(s) exist: pick a client or make a new guest */}
@@ -353,11 +378,10 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
                 <button
                   key={c.id}
                   onClick={() => resolveSplit(c.id)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium ${
-                    idx === 0
-                      ? 'bg-[#4a7196] text-white shadow hover:bg-[#3d6083]'
-                      : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium ${idx === 0
+                    ? 'bg-[#4a7196] text-white shadow hover:bg-[#3d6083]'
+                    : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <IconUsers width={15} height={15} /> Add to {c.name}
                 </button>
@@ -398,9 +422,8 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
               {['Walk-in', 'Phone'].map((opt) => (
                 <label
                   key={opt}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${
-                    source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
-                  }`}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
                 >
                   <input
                     type="radio"
@@ -424,12 +447,12 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
               </button>
               <button
                 onClick={() => {
-                   setConfirmOpen(false);
-                   if (confirmAction === 'waiting' || confirmAction === 'draft') {
-                     onClose?.();
-                   } else if (confirmAction === 'book') {
-                     takePayment ? handleBookAndPay() : handleBook();
-                   }
+                  setConfirmOpen(false);
+                  if (confirmAction === 'waiting' || confirmAction === 'draft') {
+                    onClose?.();
+                  } else if (confirmAction === 'book') {
+                    takePayment ? handleBookAndPay() : handleBook();
+                  }
                 }}
                 disabled={!source}
                 className="rounded-lg bg-[#4a7196] px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#3d6083] disabled:cursor-not-allowed disabled:opacity-40"
@@ -497,7 +520,7 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient }) {
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, total }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, total, open }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -537,7 +560,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
               </span>
             }
           >
-            <CustomerSearch value={guest.customer} onChange={onCustomer} />
+            <CustomerSearch autoFocus={true} focusTrigger={open} value={guest.customer} onChange={onCustomer} />
           </Field>
 
           <Field label="Date" required>
@@ -584,7 +607,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             <div className="mb-1.5 flex items-center gap-2.5 px-3 text-[11px] font-semibold text-gray-900">
               <span className="w-6 shrink-0" />
               <span className="min-w-0 flex-1">Service / Item</span>
-              <span className="w-16 shrink-0">Dur</span>
+              <span className="w-16 shrink-0">Duration</span>
               <span className="w-36 shrink-0"><span className="text-rose-400">*</span>Primary Stylist</span>
               <span className="w-36 shrink-0">Assistant(s)</span>
               <span className="w-28 shrink-0">Date</span>
@@ -596,7 +619,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
               {guest.rows.map((row, idx) => {
                 const tag = row.typeLabel || 'Service'
                 const m = tagStyle(tag)
-                const card = kindMeta[row.kind]?.card ?? kindMeta.service.card
+                const card = m.card ?? kindMeta.service.card
                 return (
                   <div key={row.uid} className={`rounded-lg border p-1.5 shadow ${card}`}>
                     <div className="flex items-center gap-2.5">

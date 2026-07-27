@@ -60,7 +60,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [splitRows, setSplitRows] = useState([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
   const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
-    const navigate = useNavigate()
+  const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
 
@@ -286,9 +286,13 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
           ) : (
             <GuestEditor
               key={activeGuest.id}
+              open={open}
               guest={activeGuest}
               guestName={guestName}
-              onCustomer={(c) => patchGuest(activeGuest.id, { customer: c })}
+              onCustomer={(c) => {
+                patchGuest(activeGuest.id, { customer: c });
+                if (c) setBrowseFor(activeGuest.id);
+              }}
               onPatch={(patch) => patchGuest(activeGuest.id, patch)}
               onRecent={() => setRecentOpen(true)}
               onRow={(uid, patch) => patchRow(activeGuest.id, uid, patch)}
@@ -487,25 +491,37 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscou
             <div className="mt-2 text-xs text-gray-400">No items added.</div>
           ) : (
             <div className="mt-2 space-y-1.5">
-              {g.rows.map((r) => (
-                <div key={r.uid} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="font-medium text-gray-700">{r.name}</span>
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tagStyle(r.typeLabel).pill}`}>{r.typeLabel}</span>
-                    {rowDiscountAmount && rowDiscountAmount(r) > 0 && (
-                      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                        Discount -{currency(rowDiscountAmount(r))}
-                      </span>
-                    )}
-                    {r.kind === 'service' && (
-                      <span className="text-[11px] text-gray-400">
-                        <span className={r.stylist ? 'text-gray-500' : 'italic'}>{r.stylist || 'No stylist'}</span> · {r.date} · {r.time}
-                      </span>
-                    )}
-                  </span>
-                  <span className="shrink-0 font-medium text-indigo-600">{currency(r.price)}</span>
-                </div>
-              ))}
+              {g.rows.map((r) => {
+                const getRowStyle = (t) => {
+                  const label = (t || 'Service').toLowerCase()
+                  if (label.includes('service')) return 'bg-[#cce5ff] border-[#b8daff]'
+                  if (label.includes('product')) return 'bg-[#faebb3] border-[#f0df9e]'
+                  if (label.includes('membership') || label.includes('plan')) return 'bg-[#c3e6cb] border-[#b1dfbb]'
+                  if (label.includes('package')) return 'bg-[#f5c6cb] border-[#f1b0b7]'
+                  if (label.includes('gift')) return 'bg-[#ffcc80] border-[#ffb74d]'
+                  return 'bg-white border-gray-200'
+                }
+                const rowStyle = getRowStyle(r.typeLabel)
+                return (
+                  <div key={r.uid} className={`flex items-center justify-between gap-2 rounded px-2 py-1 text-sm border ${rowStyle}`}>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <span className="font-medium text-gray-700">{r.name}</span>
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tagStyle(r.typeLabel).pill}`}>{r.typeLabel}</span>
+                      {rowDiscountAmount && rowDiscountAmount(r) > 0 && (
+                        <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                          Discount -{currency(rowDiscountAmount(r))}
+                        </span>
+                      )}
+                      {r.kind === 'service' && (
+                        <span className="text-[11px] text-gray-400">
+                          <span className={r.stylist ? 'text-gray-500' : 'italic'}>{r.stylist || 'No stylist'}</span> · {r.date} · {r.time}
+                        </span>
+                      )}
+                    </span>
+                    <span className="shrink-0 font-medium text-indigo-600">{currency(r.price)}</span>
+                  </div>
+                )
+              })}
               <div className="flex justify-end border-t border-gray-100 pt-1 text-sm font-semibold text-gray-700">
                 Subtotal: {currency(guestTotal(g))}
               </div>
@@ -518,7 +534,7 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onClient, rowDiscou
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, total, rowDiscountAmount }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onClientDetails, total, rowDiscountAmount, open }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -564,7 +580,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
               </span>
             }
           >
-            <CustomerSearch value={guest.customer} onChange={onCustomer} />
+            <CustomerSearch autoFocus={true} focusTrigger={open} value={guest.customer} onChange={onCustomer} />
           </Field>
 
           <Field label="Date" required>
@@ -608,91 +624,268 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
           </div>
         ) : (
           <>
-            <div className="space-y-2">
-              {guest.rows.map((row, idx) => {
-                const tag = row.typeLabel || 'Service'
-                const m = tagStyle(tag) // dot from tagStyle
-                const km = kindMeta[row.kind] || kindMeta.service // card from kindMeta
-                const isServiceOrProduct = row.kind === 'service' || row.kind === 'product'
-
-                return (
-                  <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border p-2 shadow-sm ${km.card}`}>
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${m.dot}`}>{nums[idx]}</span>
-
-                    <div className="w-40 shrink-0 truncate text-sm font-semibold text-gray-800" title={row.name}>
-                      {row.name}
-                    </div>
-
-                    <div className="w-72 shrink-0 flex items-center">
-                      {isServiceOrProduct && (
-                        <div className="flex items-center gap-1.5 rounded bg-[#ebf8f2] px-2 py-1 text-[11px]">
-                          <span className="font-bold text-[#20925e]">📦 Package</span>
-                          <span className="font-semibold text-[#188050]">-₹440.00</span>
-                          <select className="w-28 rounded border border-gray-200 bg-white px-1 py-0.5 text-[10px] text-gray-700 outline-none">
-                            <option>Service Package for Bi (8...</option>
-                          </select>
-                          <button className="text-gray-400 hover:text-gray-600"><IconClose width={10} height={10} /></button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1" />
-
-                    <div className="w-32 shrink-0">
-                      <select className="w-full rounded border border-gray-200 px-2 py-1.5 text-xs text-gray-500 outline-none focus:border-indigo-400">
-                        <option value="">Sale By (optional)...</option>
-                        {stylists.map(s => <option key={s.id}>{s.name}</option>)}
-                      </select>
-                    </div>
-
-                    <div className="w-32 shrink-0">
-                      <StylistSelect value={row.stylist} onChange={(v) => onRow(row.uid, { stylist: v })} placeholder="Assign stylist..." />
-                    </div>
-
-                    <div className="w-14 shrink-0 text-right text-sm text-gray-500">
-                      {currency(row.price)}
-                    </div>
-
-                    <div className="flex shrink-0 items-center rounded-lg border border-gray-200 overflow-hidden bg-white">
-                      <button onClick={() => onRow(row.uid, { qty: Math.max(1, (row.qty || 1) - 1) })} className="px-2 py-0.5 text-gray-500 hover:bg-gray-50">−</button>
-                      <span className="w-6 text-center text-sm font-semibold text-gray-800">{row.qty || 1}</span>
-                      <button onClick={() => onRow(row.uid, { qty: (row.qty || 1) + 1 })} className="bg-indigo-500 px-2 py-0.5 text-white hover:bg-indigo-600">+</button>
-                    </div>
-
-                    <div className="w-16 shrink-0 text-right text-sm font-bold text-gray-800">
-                      {currency(Math.max(0, (Number(row.price) || 0) * (row.qty || 1) - ((row.kind === 'service' || row.kind === 'product') ? 440 : 0)))}
-                    </div>
-
-                    <button onClick={() => onRemoveRow(row.uid)} className="flex shrink-0 items-center justify-center p-1 text-rose-400 hover:text-rose-600">
-                      <IconClose width={14} height={14} />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-            
-            <div className="mt-2 flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700">
-              <span className="flex items-center gap-x-2 truncate whitespace-nowrap">
-                <span>Total {totalItems}</span>
-                {typeBreakdown.length > 0 && (
-                  <span className="font-normal text-gray-500">({typeBreakdown.join(', ')})</span>
-                )}
-              </span>
-              <div className="flex items-center gap-6 mr-2">
+            <div className="overflow-x-auto">
+              <div className="flex items-center gap-2.5 px-2 pb-2 text-[11px] font-bold text-black min-w-[950px]">
+                <div className="w-48 shrink-0">Service / Item</div>
+                <div className="w-32 shrink-0 text-center">Stylist</div>
+                <div className="w-24 shrink-0 text-center">Sale By</div>
+                <div className="w-16 shrink-0 text-center">Price</div>
+                <div className="w-20 shrink-0 text-center">Qty.</div>
+                <div className="w-16 shrink-0 text-center">Amount</div>
+                <div className="w-28 shrink-0 text-center">Disc. Type</div>
+                <div className="w-16 shrink-0 text-center">Disc. Amt.</div>
+                <div className="w-20 shrink-0 text-center">Amt. After Disc.</div>
+                <div className="w-16 shrink-0 text-center">Tax Amt.</div>
+                <div className="w-24 shrink-0 text-center">Amt. Incl. Tax</div>
+                <div className="w-12 shrink-0"></div>
+              </div>
+              <div className="space-y-2 min-w-[950px]">
                 {(() => {
-                  const guestGrossTotal = guest.rows.reduce((s, r) => s + ((Number(r.price) || 0) * (r.qty || 1)), 0);
-                  const guestDiscountTotal = guest.rows.reduce((s, r) => s + (rowDiscountAmount ? rowDiscountAmount(r) : 0), 0);
-                  if (guestDiscountTotal > 0) {
+                  const counters = {}
+                  return guest.rows.map((row, idx) => {
+                    const tag = row.typeLabel || 'Service'
+                    counters[tag] = (counters[tag] || 0) + 1
+                    const rowNum = counters[tag]
+                    const meta = { ...tagStyle(tag), label: tag }
+
+                    const price = Number(row.price) || 0
+                    const qty = row.qty || 1
+                    const amount = price * qty
+                    const discType = row.discType || 'Flat'
+                    let discAmt = Number(row.discAmt) || 0
+                    if (discType === 'Prive Member' || discType === '20%') {
+                      discAmt = amount * 0.20
+                    } else if (discType.endsWith('%')) {
+                      const pct = parseFloat(discType) || 0
+                      discAmt = amount * (pct / 100)
+                    }
+                    const amtAfterDisc = Math.max(0, amount - discAmt)
+
+                    const getTaxRate = (label) => {
+                      const t = label.toLowerCase()
+                      if (t.includes('service') || t.includes('product')) return 0.18
+                      return 0
+                    }
+                    const taxRate = getTaxRate(tag)
+                    const taxAmt = amtAfterDisc * taxRate
+                    const amtInclTax = amtAfterDisc + taxAmt
+
                     return (
-                      <>
-                        <span className="text-gray-500 font-medium">Price: {currency(guestGrossTotal)}</span>
-                        <span className="text-emerald-600 font-medium">Disc: -{currency(guestDiscountTotal)}</span>
-                      </>
-                    );
-                  }
-                  return null;
+                      <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border p-1 shadow-sm ${meta.card}`}>
+                        {/* Item */}
+                        <div className="w-48 shrink-0 flex items-center gap-2 pl-1">
+                          <span title={`${meta.label} ${rowNum}`} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${meta.dot}`}>
+                            {rowNum}
+                          </span>
+                          <span className="flex min-w-0 flex-1 items-center gap-1.5" title={row.name}>
+                            <span className="truncate text-sm font-semibold text-gray-800">{row.name}</span>
+                            <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>{meta.label}</span>
+                            {row.kind === 'service' && <GenderBadge name={row.name} />}
+                          </span>
+                        </div>
+
+                        {/* Stylist */}
+                        <div className="w-32 shrink-0">
+                          {row.kind === 'service' && (
+                            <StylistSelect
+                              value={row.stylist}
+                              onChange={(v) => onRow(row.uid, { stylist: v })}
+                              placeholder="Select Stylist"
+                              className="!rounded-full !h-[26px] !py-0 !text-[11px]"
+                            />
+                          )}
+                        </div>
+
+                        {/* Sale By */}
+                        <div className="w-24 shrink-0">
+                          <select
+                            className="w-full h-[26px] rounded-full border border-gray-200 px-2 text-[11px] bg-white text-gray-700 outline-none"
+                            value={row.saleBy || ''}
+                            onChange={(e) => onRow(row.uid, { saleBy: e.target.value })}
+                          >
+                            <option value="">Abhay</option>
+                            {stylists.map(s => <option key={s.id}>{s.name}</option>)}
+                          </select>
+                        </div>
+
+                        {/* Price */}
+                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                          {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && row.isEditing ? (
+                            <input
+                              type="number"
+                              className="w-full rounded bg-white px-1 py-0.5 text-center text-xs font-semibold text-gray-700 outline-none border border-gray-200 focus:border-indigo-400"
+                              value={row.price}
+                              onChange={(e) => onRow(row.uid, { price: e.target.value })}
+                              onBlur={(e) => {
+                                let baseP = Number(row.basePrice);
+                                if (isNaN(baseP) || row.basePrice === undefined) {
+                                  baseP = Number(row.price) || 0;
+                                }
+                                let p = Number(e.target.value) || 0;
+                                if (baseP > 0) {
+                                  if (p < baseP) p = baseP;
+                                  if (p > baseP * 3) p = baseP * 3;
+                                }
+                                onRow(row.uid, { price: p, basePrice: row.basePrice !== undefined ? row.basePrice : baseP });
+                              }}
+                            />
+                          ) : (
+                            currency(price)
+                          )}
+                        </div>
+
+                        {/* Qty */}
+                        <div className="w-20 shrink-0 flex items-center justify-center">
+                          {tag.toLowerCase().includes('product') ? (
+                            <div className="flex shrink-0 items-center rounded-full bg-white px-1.5 py-0.5 border border-gray-200">
+                              <button onClick={() => onRow(row.uid, { qty: Math.max(1, qty - 1) })} className="px-1 text-gray-500 font-bold">−</button>
+                              <span className="w-5 text-center text-[11px] font-bold text-black">{qty}</span>
+                              <button onClick={() => onRow(row.uid, { qty: qty + 1 })} className="px-1 text-gray-500 font-bold">+</button>
+                            </div>
+                          ) : (
+                            <span className="text-center text-[11px] font-bold text-black">{qty}</span>
+                          )}
+                        </div>
+
+                        {/* Amount */}
+                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                          {currency(amount)}
+                        </div>
+
+                        {/* Disc Type */}
+                        <div className="w-28 shrink-0">
+                          <select
+                            className="w-full rounded-full border border-gray-200 px-2 py-1 text-[11px] bg-white text-gray-700 outline-none"
+                            value={discType}
+                            onChange={(e) => onRow(row.uid, { discType: e.target.value })}
+                          >
+                            <option value="Flat">Flat</option>
+                            <option value="Custom Discount">Custom Discount</option>
+                            <option value="Prive Member">Prive Member</option>
+                            <option value="10%">10%</option>
+                            <option value="20%">20%</option>
+                          </select>
+                        </div>
+
+                        {/* Disc Amt */}
+                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                          {currency(discAmt)}
+                        </div>
+
+                        {/* Amt After Disc */}
+                        <div className="w-20 shrink-0 text-center text-xs text-black">
+                          {currency(amtAfterDisc)}
+                        </div>
+
+                        {/* Tax Amt */}
+                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                          {currency(taxAmt)}
+                        </div>
+
+                        {/* Amt Incl Tax */}
+                        <div className="w-24 shrink-0 text-center text-xs font-bold text-black">
+                          {currency(amtInclTax)}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="w-12 shrink-0 flex items-center justify-center gap-1">
+                          {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && (
+                            <button
+                              onClick={() => onRow(row.uid, { isEditing: !row.isEditing })}
+                              className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow-sm"
+                            >
+                              {row.isEditing ? (
+                                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                              ) : (
+                                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                              )}
+                            </button>
+                          )}
+                          <button onClick={() => onRemoveRow(row.uid)} className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm">
+                            <IconClose width={10} height={10} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })
                 })()}
-                <span className="text-indigo-600 font-bold">Net: {currency(total)}</span>
+              </div>
+
+              {/* Totals Footer */}
+              <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-gray-100 p-2 text-sm font-semibold text-gray-700 min-w-[950px]">
+                <div className="w-[27.25rem] shrink-0 flex items-center gap-x-2 truncate whitespace-nowrap px-1">
+                  <span>Total {guest.rows.length}</span>
+                  {typeBreakdown.length > 0 && (
+                    <span className="font-normal text-gray-500">({typeBreakdown.join(', ')})</span>
+                  )}
+                </div>
+
+                {(() => {
+                  let totalPrice = 0;
+                  let totalAmount = 0;
+                  let totalDiscAmt = 0;
+                  let totalAmtAfterDisc = 0;
+                  let totalTaxAmt = 0;
+                  let totalAmtInclTax = 0;
+
+                  guest.rows.forEach(row => {
+                    const tag = row.typeLabel || 'Service';
+                    const price = Number(row.price) || 0;
+                    const qty = row.qty || 1;
+                    const amount = price * qty;
+                    const discType = row.discType || 'Flat';
+                    let discAmt = Number(row.discAmt) || 0;
+                    if (discType === 'Prive Member' || discType === '20%') {
+                      discAmt = amount * 0.20;
+                    } else if (discType.endsWith('%')) {
+                      const pct = parseFloat(discType) || 0;
+                      discAmt = amount * (pct / 100);
+                    }
+                    const amtAfterDisc = Math.max(0, amount - discAmt);
+
+                    const getTaxRate = (label) => {
+                      const t = label.toLowerCase();
+                      if (t.includes('service') || t.includes('product')) return 0.18;
+                      return 0;
+                    }
+                    const taxRate = getTaxRate(tag);
+                    const taxAmt = amtAfterDisc * taxRate;
+                    const amtInclTax = amtAfterDisc + taxAmt;
+
+                    totalPrice += price;
+                    totalAmount += amount;
+                    totalDiscAmt += discAmt;
+                    totalAmtAfterDisc += amtAfterDisc;
+                    totalTaxAmt += taxAmt;
+                    totalAmtInclTax += amtInclTax;
+                  });
+
+                  return (
+                    <>
+                      <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
+                        {currency(totalPrice)}
+                      </div>
+                      <div className="w-20 shrink-0"></div>
+                      <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
+                        {currency(totalAmount)}
+                      </div>
+                      <div className="w-28 shrink-0"></div>
+                      <div className="w-16 shrink-0 text-center text-emerald-600 font-bold">
+                        {totalDiscAmt > 0 ? currency(totalDiscAmt) : '0'}
+                      </div>
+                      <div className="w-20 shrink-0 text-center text-gray-700 font-bold">
+                        {currency(totalAmtAfterDisc)}
+                      </div>
+                      <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
+                        {currency(totalTaxAmt)}
+                      </div>
+                      <div className="w-24 shrink-0 text-center text-indigo-600 font-bold">
+                        {currency(totalAmtInclTax)}
+                      </div>
+                      <div className="w-12 shrink-0"></div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </>
@@ -726,7 +919,7 @@ function CheckoutPanel({
   onSaveDraft, onPrintAndSave,
   disabled
 }) {
-    const md = Number(manualDiscount) || 0;
+  const md = Number(manualDiscount) || 0;
   const t = Number(tip) || 0;
 
   const totalSaved = packageDiscount + md;
@@ -959,9 +1152,6 @@ function CheckoutPanel({
             <option value="">Sale By (optional)</option>
             {stylists.map(s => <option key={s.id}>{s.name}</option>)}
           </select>
-
-          
-
 
         </div>
       </div>

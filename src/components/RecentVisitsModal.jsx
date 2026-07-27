@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { recentVisits, currency } from '../data/services'
 import { IconClose, IconClock } from './Icons'
 
@@ -7,7 +8,7 @@ const statusStyle = {
   Cancelled: 'text-gray-400',
 }
 
-function VisitCard({ visit, index, total }) {
+function VisitCard({ visit, index, total, onBookAgain }) {
   const visitTotal = visit.items.reduce((s, i) => s + i.price, 0)
   return (
     <div className="rounded-lg border border-indigo-100 bg-indigo-50/40 px-3 py-2.5">
@@ -44,7 +45,10 @@ function VisitCard({ visit, index, total }) {
         <span className="text-xs text-gray-500">
           Total: <span className="font-semibold text-gray-800">{currency(visitTotal)}</span>
         </span>
-        <button className="rounded-md bg-[#4a7196] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#3d6083]">
+        <button 
+          onClick={() => onBookAgain(visit)}
+          className="rounded-md bg-[#4a7196] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#3d6083]"
+        >
           Book Again
         </button>
       </div>
@@ -52,7 +56,18 @@ function VisitCard({ visit, index, total }) {
   )
 }
 
-export default function RecentVisitsModal({ open, onClose }) {
+export default function RecentVisitsModal({ open, onClose, onRepeat }) {
+  const [repeatPrompt, setRepeatPrompt] = useState(null)
+  const [repeatType, setRepeatType] = useState('Appointment')
+
+  const handleSubmit = () => {
+    if (onRepeat && repeatPrompt) {
+      onRepeat(repeatPrompt, repeatType)
+    }
+    setRepeatPrompt(null)
+    onClose()
+  }
+
   return (
     <>
       {/* Backdrop */}
@@ -83,7 +98,13 @@ export default function RecentVisitsModal({ open, onClose }) {
         {/* Scrollable list */}
         <div className="flex-1 space-y-2.5 overflow-y-auto bg-gray-50/40 px-6 py-4">
           {recentVisits.map((v, i) => (
-            <VisitCard key={v.id} visit={v} index={i} total={recentVisits.length} />
+            <VisitCard 
+              key={v.id} 
+              visit={v} 
+              index={i} 
+              total={recentVisits.length} 
+              onBookAgain={setRepeatPrompt} 
+            />
           ))}
         </div>
 
@@ -94,6 +115,51 @@ export default function RecentVisitsModal({ open, onClose }) {
           </button>
         </div>
       </div>
+
+      {/* Repeat Prompt Modal */}
+      {repeatPrompt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="h-2 w-full bg-[#4a7196]" />
+            <div className="p-6">
+              <h3 className="mb-4 text-sm font-bold text-gray-800">What you want to repeat?</h3>
+              
+              <div className="mb-6 flex items-center gap-6">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <div className={`flex h-5 w-5 items-center justify-center rounded-full border ${repeatType === 'Appointment' ? 'border-[#4a7196]' : 'border-gray-300'}`}>
+                    {repeatType === 'Appointment' && <div className="h-2.5 w-2.5 rounded-full bg-[#4a7196]" />}
+                  </div>
+                  <span className="text-sm text-gray-700">Appointment</span>
+                  <input type="radio" className="hidden" checked={repeatType === 'Appointment'} onChange={() => setRepeatType('Appointment')} />
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2">
+                  <div className={`flex h-5 w-5 items-center justify-center rounded-full border ${repeatType === 'Service' ? 'border-[#4a7196]' : 'border-gray-300'}`}>
+                    {repeatType === 'Service' && <div className="h-2.5 w-2.5 rounded-full bg-[#4a7196]" />}
+                  </div>
+                  <span className="text-sm text-gray-700">Service</span>
+                  <input type="radio" className="hidden" checked={repeatType === 'Service'} onChange={() => setRepeatType('Service')} />
+                </label>
+              </div>
+
+              <div className="flex justify-center gap-3">
+                <button 
+                  onClick={() => setRepeatPrompt(null)}
+                  className="rounded-full border border-gray-300 px-6 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSubmit}
+                  className="rounded-full bg-[#1b3b5c] px-6 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#132c45]"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

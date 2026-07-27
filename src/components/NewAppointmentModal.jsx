@@ -157,9 +157,8 @@ function StylistSelect({ value, onChange, placeholder = 'Select...' }) {
                 key={s.id}
                 type="button"
                 onClick={() => pick(s.name)}
-                className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm hover:bg-indigo-50 ${
-                  value === s.name ? 'font-semibold text-indigo-600' : 'text-gray-700'
-                }`}
+                className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm hover:bg-indigo-50 ${value === s.name ? 'font-semibold text-indigo-600' : 'text-gray-700'
+                  }`}
               >
                 {s.name}
               </button>
@@ -222,9 +221,8 @@ function SearchSelect({ value, onChange, options, placeholder = 'Select...', sea
                 key={o}
                 type="button"
                 onClick={() => pick(o)}
-                className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm hover:bg-indigo-50 ${
-                  value === o ? 'font-semibold text-indigo-600' : 'text-gray-700'
-                }`}
+                className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm hover:bg-indigo-50 ${value === o ? 'font-semibold text-indigo-600' : 'text-gray-700'
+                  }`}
               >
                 {o}
               </button>
@@ -277,19 +275,19 @@ const emptyService = () => ({
 
 // Per-kind styling for the appointment rows.
 const kindMeta = {
-  service: { label: 'Service', card: 'border-indigo-100 bg-indigo-50/40', dot: 'bg-indigo-600', text: 'text-indigo-600', pill: 'bg-indigo-100 text-indigo-700' },
-  product: { label: 'Product', card: 'border-amber-100 bg-amber-50/50', dot: 'bg-amber-500', text: 'text-amber-600', pill: 'bg-amber-100 text-amber-700' },
-  plan: { label: 'Plan', card: 'border-emerald-100 bg-emerald-50/50', dot: 'bg-emerald-600', text: 'text-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
+  service: { label: 'Service', card: 'bg-indigo-100 border-indigo-200', dot: 'bg-indigo-600', text: 'text-indigo-600', pill: 'bg-indigo-100 text-indigo-700' },
+  product: { label: 'Product', card: 'bg-amber-100 border-amber-200', dot: 'bg-amber-500', text: 'text-amber-600', pill: 'bg-amber-100 text-amber-700' },
+  plan: { label: 'Plan', card: 'bg-emerald-100 border-emerald-200', dot: 'bg-emerald-600', text: 'text-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
 }
 
 // Per-tag styling — each item type gets its own row background, dot & pill.
 const tagMeta = {
-  Service: { card: 'border-indigo-100 bg-indigo-50/40', dot: 'bg-indigo-600', pill: 'bg-indigo-100 text-indigo-700' },
-  Product: { card: 'border-amber-100 bg-amber-50/50', dot: 'bg-amber-500', pill: 'bg-amber-100 text-amber-700' },
-  Membership: { card: 'border-emerald-100 bg-emerald-50/50', dot: 'bg-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
-  Package: { card: 'border-sky-100 bg-sky-50/50', dot: 'bg-sky-600', pill: 'bg-sky-100 text-sky-700' },
-  'Gift Card': { card: 'border-rose-100 bg-rose-50/50', dot: 'bg-rose-500', pill: 'bg-rose-100 text-rose-700' },
-  Plan: { card: 'border-emerald-100 bg-emerald-50/50', dot: 'bg-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
+  Service: { card: 'bg-indigo-100 border-indigo-200', dot: 'bg-indigo-600', pill: 'bg-indigo-100 text-indigo-700' },
+  Product: { card: 'bg-amber-100 border-amber-200', dot: 'bg-amber-500', pill: 'bg-amber-100 text-amber-700' },
+  Membership: { card: 'bg-emerald-100 border-emerald-200', dot: 'bg-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
+  Package: { card: 'bg-sky-100 border-sky-200', dot: 'bg-sky-600', pill: 'bg-sky-100 text-sky-700' },
+  'Gift Card': { card: 'bg-rose-100 border-rose-200', dot: 'bg-rose-500', pill: 'bg-rose-100 text-rose-700' },
+  Plan: { card: 'bg-emerald-100 border-emerald-200', dot: 'bg-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
 }
 const tagStyle = (tag) => tagMeta[tag] ?? tagMeta.Service
 
@@ -316,7 +314,7 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
       const j = index + dir
       if (j < 0 || j >= rs.length) return rs
       const next = [...rs]
-      ;[next[index], next[j]] = [next[j], next[index]]
+        ;[next[index], next[j]] = [next[j], next[index]]
       return next
     })
 
@@ -411,17 +409,15 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 ${
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+        className={`fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
       />
 
       {/* Right-side drawer — slides in, sits beside the 16rem sidebar */}
       <div
         style={{ width: 'calc(100% - 16rem)' }}
-        className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${
-          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
+          }`}
       >
         {/* Header */}
         <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-2.5">
@@ -461,195 +457,203 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
         <div className="flex-1 space-y-2 overflow-y-auto bg-gray-50/10 p-4">
           {/* Section 1 — Customer & schedule */}
           <section className="rounded-xl border border-sky-200 bg-sky-100/60 p-2">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-6">
-            <Field label={<span className="inline-flex items-center gap-1"><IconUsers width={13} height={13} /> Customer</span>} required className="lg:col-span-2">
-              <CustomerSearch value={customer} onChange={setCustomer} />
-            </Field>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-6">
+              <Field label={<span className="inline-flex items-center gap-1"><IconUsers width={13} height={13} /> Customer</span>} required className="lg:col-span-2">
+                <CustomerSearch
+                  autoFocus={true}
+                  focusTrigger={open}
+                  value={customer}
+                  onChange={(c) => {
+                    setCustomer(c);
+                    if (c) setModalOpen(true);
+                  }}
+                />
+              </Field>
 
-            <Field label="Date" required>
-              <SearchSelect value={apptDate} onChange={setApptDate} options={FUTURE_DATES} placeholder="Select date" searchPlaceholder="Search date..." />
-            </Field>
+              <Field label="Date" required>
+                <SearchSelect value={apptDate} onChange={setApptDate} options={FUTURE_DATES} placeholder="Select date" searchPlaceholder="Search date..." />
+              </Field>
 
-            <Field label="Time" required>
-              <SearchSelect value={apptTime} onChange={setApptTime} options={TIME_SLOTS} placeholder="Select time" searchPlaceholder="Search time..." />
-            </Field>
+              <Field label="Time" required>
+                <SearchSelect value={apptTime} onChange={setApptTime} options={TIME_SLOTS} placeholder="Select time" searchPlaceholder="Search time..." />
+              </Field>
 
-            <Field label={<span className="inline-flex items-center gap-1"><IconHome width={13} height={13} /> Home Service</span>}>
-              <button
-                onClick={() => setHomeService((v) => !v)}
-                className="flex h-[34px] w-full items-center gap-2 rounded-md border border-gray-200 bg-white px-2"
-              >
-                <span className={`relative h-4 w-8 shrink-0 rounded-full transition-colors ${homeService ? 'bg-indigo-600' : 'bg-gray-300'}`}>
-                  <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${homeService ? 'left-[18px]' : 'left-0.5'}`} />
-                </span>
-                <span className="truncate text-xs text-gray-600">
-                  {homeService ? 'Yes — Home' : 'No — Salon'}
-                </span>
-              </button>
-            </Field>
-
-            {customer && (
-              <Field label={<span className="invisible">Recent</span>}>
+              <Field label={<span className="inline-flex items-center gap-1"><IconHome width={13} height={13} /> Home Service</span>}>
                 <button
-                  onClick={() => setRecentOpen(true)}
-                  className="h-[34px] w-full rounded-md border border-gray-200 bg-white px-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                  onClick={() => setHomeService((v) => !v)}
+                  className="flex h-[34px] w-full items-center gap-2 rounded-md border border-gray-200 bg-white px-2"
                 >
-                  Recent Visits
+                  <span className={`relative h-4 w-8 shrink-0 rounded-full transition-colors ${homeService ? 'bg-indigo-600' : 'bg-gray-300'}`}>
+                    <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${homeService ? 'left-[18px]' : 'left-0.5'}`} />
+                  </span>
+                  <span className="truncate text-xs text-gray-600">
+                    {homeService ? 'Yes — Home' : 'No — Salon'}
+                  </span>
                 </button>
               </Field>
-            )}
-          </div>
+
+              {customer && (
+                <Field label={<span className="invisible">Recent</span>}>
+                  <button
+                    onClick={() => setRecentOpen(true)}
+                    className="h-[34px] w-full rounded-md border border-gray-200 bg-white px-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                  >
+                    Recent Visits
+                  </button>
+                </Field>
+              )}
+            </div>
           </section>
 
           {/* Section 2 — Services / items */}
           <section className="rounded-xl border border-gray-200 bg-white p-2">
 
-          {/* Service rows */}
-          <div className="mt-0">
-            {rows.length === 0 ? (
-              <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
-                No items added yet — use <span className="font-medium text-gray-500">Browse Select Items</span> below to add services, products or plans.
-              </div>
-            ) : (
-              <>
-                {/* Column header (once) */}
-                <div className="mb-1.5 flex items-center gap-2.5 px-3 text-[11px] font-semibold text-gray-900">
-                  <span className="w-6 shrink-0" />
-                  <span className="min-w-0 flex-1">Service / Item</span>
-                  <span className="w-16 shrink-0">Duration</span>
-                  <span className="w-36 shrink-0"><span className="text-rose-400">*</span>Primary Stylist</span>
-                  <span className="w-36 shrink-0">Assistant(s)</span>
-                  <span className="w-28 shrink-0">Date</span>
-                  <span className="w-24 shrink-0">Time</span>
-                  <span className="w-24 shrink-0">Price (₹)</span>
-                  <span className="w-6 shrink-0" />
+            {/* Service rows */}
+            <div className="mt-0">
+              {rows.length === 0 ? (
+                <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
+                  No items added yet — use <span className="font-medium text-gray-500">Browse Select Items</span> below to add services, products or plans.
                 </div>
+              ) : (
+                <>
+                  {/* Column header (once) */}
+                  <div className="mb-1.5 flex items-center gap-2.5 px-3 text-[11px] font-semibold text-gray-900">
+                    <span className="w-6 shrink-0" />
+                    <span className="min-w-0 flex-1">Service / Item</span>
+                    <span className="w-16 shrink-0">Duration</span>
+                    <span className="w-36 shrink-0"><span className="text-rose-400">*</span>Primary Stylist</span>
+                    <span className="w-36 shrink-0">Assistant(s)</span>
+                    <span className="w-28 shrink-0">Date</span>
+                    <span className="w-24 shrink-0">Time</span>
+                    <span className="w-24 shrink-0">Price (₹)</span>
+                    <span className="w-6 shrink-0" />
+                  </div>
 
-                <div className="space-y-2">
-                  {rows.map((row, idx) => {
-                    const tag = row.typeLabel || kindMeta[row.kind]?.label || 'Service'
-                    const meta = { ...tagStyle(tag), label: tag }
-                    return (
-                      <div key={row.uid} className={`rounded-lg border px-3 py-1.5 shadow-md ${meta.card}`}>
-                        <div className="flex items-center gap-2.5">
-                          <span
-                            title={`${meta.label} ${rowNumbers[idx]}`}
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${meta.dot}`}
-                          >
-                            {rowNumbers[idx]}
-                          </span>
+                  <div className="space-y-2">
+                    {rows.map((row, idx) => {
+                      const tag = row.typeLabel || kindMeta[row.kind]?.label || 'Service'
+                      const meta = { ...tagStyle(tag), label: tag }
+                      return (
+                        <div key={row.uid} className={`rounded-lg border px-3 py-1.5 shadow-md ${meta.card}`}>
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              title={`${meta.label} ${rowNumbers[idx]}`}
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${meta.dot}`}
+                            >
+                              {rowNumbers[idx]}
+                            </span>
 
-                          {row.kind === 'service' ? (
-                            <>
-                              <div className="flex min-w-0 flex-1 items-center gap-2">
-                                <span className="truncate text-sm font-semibold text-gray-800">
-                                  {row.name || <span className="font-normal text-gray-400">—</span>}
-                                </span>
-                                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>
-                                  {row.typeLabel || meta.label}
-                                </span>
-                              </div>
-                              <div className="w-16 shrink-0">
-                                <input className={cInput} value={row.duration} onChange={(e) => updateRow(row.uid, { duration: e.target.value })} />
-                              </div>
-                              <div className="w-36 shrink-0">
-                                <StylistSelect
-                                  value={row.stylist}
-                                  onChange={(v) => updateRow(row.uid, { stylist: v })}
-                                />
-                              </div>
-                              <div className="w-36 shrink-0">
-                                <AssistantSelect
-                                  value={row.assistants}
-                                  onChange={(v) => updateRow(row.uid, { assistants: v })}
-                                />
-                              </div>
-                              <div className="w-28 shrink-0">
-                                <SearchSelect value={row.date} onChange={(v) => updateRow(row.uid, { date: v })} options={FUTURE_DATES} placeholder="Date" searchPlaceholder="Search date..." />
-                              </div>
-                              <div className="w-24 shrink-0">
-                                <SearchSelect value={row.time} onChange={(v) => updateRow(row.uid, { time: v })} options={TIME_SLOTS} placeholder="Time" searchPlaceholder="Search time..." />
-                              </div>
-                              <div className="w-24 shrink-0">
-                                <input className={cInput} value={row.price} onChange={(e) => updateRow(row.uid, { price: e.target.value })} placeholder="0.00" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex min-w-0 flex-1 items-center gap-2">
-                                <span className="truncate text-sm font-semibold text-gray-800">{row.name}</span>
-                                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>
-                                  {row.typeLabel || meta.label}
-                                </span>
-                              </div>
-                              <span className="w-16 shrink-0" />
-                              <span className="w-36 shrink-0" />
-                              <span className="w-36 shrink-0" />
-                              <span className="w-28 shrink-0" />
-                              <span className="w-24 shrink-0" />
-                              <div className="w-24 shrink-0 text-sm font-semibold text-gray-800">{currency(row.price)}</div>
-                            </>
-                          )}
+                            {row.kind === 'service' ? (
+                              <>
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                  <span className="truncate text-sm font-semibold text-gray-800">
+                                    {row.name || <span className="font-normal text-gray-400">—</span>}
+                                  </span>
+                                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>
+                                    {row.typeLabel || meta.label}
+                                  </span>
+                                </div>
+                                <div className="w-16 shrink-0">
+                                  <input className={cInput} value={row.duration} onChange={(e) => updateRow(row.uid, { duration: e.target.value })} />
+                                </div>
+                                <div className="w-36 shrink-0">
+                                  <StylistSelect
+                                    value={row.stylist}
+                                    onChange={(v) => updateRow(row.uid, { stylist: v })}
+                                  />
+                                </div>
+                                <div className="w-36 shrink-0">
+                                  <AssistantSelect
+                                    value={row.assistants}
+                                    onChange={(v) => updateRow(row.uid, { assistants: v })}
+                                  />
+                                </div>
+                                <div className="w-28 shrink-0">
+                                  <SearchSelect value={row.date} onChange={(v) => updateRow(row.uid, { date: v })} options={FUTURE_DATES} placeholder="Date" searchPlaceholder="Search date..." />
+                                </div>
+                                <div className="w-24 shrink-0">
+                                  <SearchSelect value={row.time} onChange={(v) => updateRow(row.uid, { time: v })} options={TIME_SLOTS} placeholder="Time" searchPlaceholder="Search time..." />
+                                </div>
+                                <div className="w-24 shrink-0">
+                                  <input className={cInput} value={row.price} onChange={(e) => updateRow(row.uid, { price: e.target.value })} placeholder="0.00" />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                  <span className="truncate text-sm font-semibold text-gray-800">{row.name}</span>
+                                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${meta.pill}`}>
+                                    {row.typeLabel || meta.label}
+                                  </span>
+                                </div>
+                                <span className="w-16 shrink-0" />
+                                <span className="w-36 shrink-0" />
+                                <span className="w-36 shrink-0" />
+                                <span className="w-28 shrink-0" />
+                                <span className="w-24 shrink-0" />
+                                <div className="w-24 shrink-0 text-sm font-semibold text-gray-800">{currency(row.price)}</div>
+                              </>
+                            )}
 
-                          <button
-                            onClick={() => removeRow(row.uid)}
-                            title="Remove item"
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-rose-50 hover:text-rose-500"
-                          >
-                            <IconClose width={16} height={16} />
-                          </button>
+                            <button
+                              onClick={() => removeRow(row.uid)}
+                              title="Remove item"
+                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-rose-50 hover:text-rose-500"
+                            >
+                              <IconClose width={16} height={16} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
 
-                {/* Totals row */}
-                <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700">
-                  <span className="w-6 shrink-0" />
-                  <span className="flex min-w-0 flex-1 items-center gap-x-2 truncate whitespace-nowrap">
-                    <span>Total {totalItems}</span>
-                    {typeBreakdown.length > 0 && (
-                      <span className="font-normal text-gray-500">({typeBreakdown.join(', ')})</span>
-                    )}
-                  </span>
-                  <span className="w-16 shrink-0">{totalDuration} min</span>
-                  <span className="w-36 shrink-0" />
-                  <span className="w-36 shrink-0" />
-                  <span className="w-28 shrink-0" />
-                  <span className="w-24 shrink-0" />
-                  <span className="w-24 shrink-0 text-indigo-600">{currency(totalPrice)}</span>
-                  <span className="w-6 shrink-0" />
-                </div>
-              </>
-            )}
-          </div>
+                  {/* Totals row */}
+                  <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700">
+                    <span className="w-6 shrink-0" />
+                    <span className="flex min-w-0 flex-1 items-center gap-x-2 truncate whitespace-nowrap">
+                      <span>Total {totalItems}</span>
+                      {typeBreakdown.length > 0 && (
+                        <span className="font-normal text-gray-500">({typeBreakdown.join(', ')})</span>
+                      )}
+                    </span>
+                    <span className="w-16 shrink-0">{totalDuration} min</span>
+                    <span className="w-36 shrink-0" />
+                    <span className="w-36 shrink-0" />
+                    <span className="w-28 shrink-0" />
+                    <span className="w-24 shrink-0" />
+                    <span className="w-24 shrink-0 text-indigo-600">{currency(totalPrice)}</span>
+                    <span className="w-6 shrink-0" />
+                  </div>
+                </>
+              )}
+            </div>
 
-          {/* Auto-assign + Auto-sequence + Browse */}
-          <div className="mt-4 flex gap-3">
-            {rows.some((r) => r.kind === 'service') && (
+            {/* Auto-assign + Auto-sequence + Browse */}
+            <div className="mt-4 flex gap-3">
+              {rows.some((r) => r.kind === 'service') && (
+                <button
+                  onClick={autoAssignStylists}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3.5 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
+                >
+                  <IconUsers width={18} height={18} /> Auto Assign Stylist
+                </button>
+              )}
+              {rows.length > 1 && (
+                <button
+                  onClick={() => setSeqOpen(true)}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3.5 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
+                >
+                  <IconMenu width={18} height={18} /> Auto Sequence
+                </button>
+              )}
               <button
-                onClick={autoAssignStylists}
-                className="flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3.5 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
+                onClick={() => setModalOpen(true)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
               >
-                <IconUsers width={18} height={18} /> Auto Assign Stylist
+                <IconGrid width={18} height={18} /> Browse Select Items
               </button>
-            )}
-            {rows.length > 1 && (
-              <button
-                onClick={() => setSeqOpen(true)}
-                className="flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3.5 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
-              >
-                <IconMenu width={18} height={18} /> Auto Sequence
-              </button>
-            )}
-            <button
-              onClick={() => setModalOpen(true)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              <IconGrid width={18} height={18} /> Browse Select Items
-            </button>
-          </div>
+            </div>
           </section>
 
           {/* Section 3 — Membership / Packages / Gift Cards */}
@@ -670,14 +674,14 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
                 </select>
               </div>
               <div>
-                <Label>Package Plans</Label>
+                <Label>Package Offers</Label>
                 <select className={input}>
                   <option value="">Select package plans to sell...</option>
                   {packagePlans.map((p) => <option key={p.id}>{p.name} — {currency(p.price)}</option>)}
                 </select>
               </div>
               <div>
-                <Label>Gift Card Plans</Label>
+                <Label>Gift Card Offers</Label>
                 <select className={input}>
                   <option value="">Select gift card plans to sell...</option>
                   {giftCardPlans.map((p) => <option key={p.id}>{p.name} — {currency(p.price)}</option>)}
@@ -720,7 +724,24 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
       </div>
 
       <ServiceModal open={modalOpen} onClose={() => setModalOpen(false)} onAdd={handleModalAdd} />
-      <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
+      <RecentVisitsModal 
+        open={recentOpen} 
+        onClose={() => setRecentOpen(false)} 
+        onRepeat={(visit, repeatType) => {
+          const mappedItems = visit.items.map(it => ({
+            uid: crypto.randomUUID(),
+            kind: 'service',
+            name: it.name,
+            price: it.price,
+            duration: '30',
+            stylist: repeatType === 'Appointment' ? (it.stylist || '') : '',
+            assistants: '',
+            date: date,
+            time: time,
+          }))
+          setRows((prev) => [...prev, ...mappedItems])
+        }}
+      />
       <AddCustomerModal open={custAddOpen} onClose={() => setCustAddOpen(false)} onAdd={setCustomer} />
       <ClientDetailsDrawer open={clientOpen} onClose={() => setClientOpen(false)} customer={customer} />
       <ClientDetailsDrawer open={clientOpen} onClose={() => setClientOpen(false)} customer={customer} />
@@ -818,9 +839,8 @@ export default function NewAppointmentModal({ open, onClose, onBooked }) {
               {['Walk-in', 'Phone'].map((opt) => (
                 <label
                   key={opt}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${
-                    source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
-                  }`}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${source === opt ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
                 >
                   <input
                     type="radio"

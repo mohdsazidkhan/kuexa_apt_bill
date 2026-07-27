@@ -6,7 +6,7 @@ import { GenderBadge } from './apptFields'
 const TABS = [
   { key: 'services', label: 'Services', icon: IconScissors, data: services },
   { key: 'products', label: 'Products', icon: IconGrid, data: products },
-  { key: 'plans', label: 'Plans', icon: IconTag, data: plans },
+  { key: 'plans', label: 'Offers', icon: IconTag, data: plans },
 ]
 
 // Tag pill colours for plan sub-types.
@@ -60,17 +60,15 @@ export default function ServiceModal({ open, onClose, onAdd }) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ${
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+        className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
       />
 
       {/* Right-side drawer — same style as the New Appointment drawer */}
       <div
         style={{ width: 'calc(100% - 16rem)' }}
-        className={`fixed right-0 top-0 z-50 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${
-          open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
-        }`}
+        className={`fixed right-0 top-0 z-50 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
+          }`}
       >
         {/* Header */}
         <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-2.5">
@@ -91,9 +89,8 @@ export default function ServiceModal({ open, onClose, onAdd }) {
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${
-                    on ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors ${on ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100'
+                    }`}
                 >
                   <Icon width={16} height={16} /> {t.label}
                 </button>
@@ -119,9 +116,8 @@ export default function ServiceModal({ open, onClose, onAdd }) {
                 <button
                   key={c}
                   onClick={() => setCategory(c)}
-                  className={`transition-colors ${
-                    category === c ? 'font-semibold text-indigo-600' : 'text-gray-500 hover:text-gray-800'
-                  }`}
+                  className={`transition-colors ${category === c ? 'font-semibold text-indigo-600' : 'text-gray-500 hover:text-gray-800'
+                    }`}
                 >
                   {c}
                 </button>
@@ -137,11 +133,10 @@ export default function ServiceModal({ open, onClose, onAdd }) {
                 <button
                   key={item.id}
                   onClick={() => toggle(item)}
-                  className={`flex flex-col items-center rounded-lg border p-2.5 text-center transition-all ${
-                    on
+                  className={`flex flex-col items-center rounded-lg border p-2.5 text-center transition-all ${on
                       ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
                       : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm'
-                  }`}
+                    }`}
                 >
                   {item.type ? (
                     <span className={`mb-1 rounded px-1.5 py-0.5 text-[9px] font-semibold ${planTagStyle[item.type] ?? 'bg-gray-100 text-gray-600'}`}>

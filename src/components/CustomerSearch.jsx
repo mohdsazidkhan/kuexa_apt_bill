@@ -1,16 +1,26 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { customers } from '../data/services'
 import { IconUsers, IconSearch, IconClose } from './Icons'
 import AddCustomerModal from './AddCustomerModal'
 
 const isPhoneQuery = (q) => /\d/.test(q) && /^[\d+\-\s]+$/.test(q)
 
-export default function CustomerSearch({ value, onChange }) {
+export default function CustomerSearch({ value, onChange, autoFocus = false, focusTrigger = false }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [addInitial, setAddInitial] = useState({})
   const [promptedQuery, setPromptedQuery] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (autoFocus && focusTrigger && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus()
+        setOpen(true)
+      }, 50)
+    }
+  }, [autoFocus, focusTrigger])
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -96,6 +106,7 @@ export default function CustomerSearch({ value, onChange }) {
       <div className="relative">
         <IconSearch width={16} height={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
+          ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}

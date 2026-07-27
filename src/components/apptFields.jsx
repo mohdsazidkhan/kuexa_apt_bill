@@ -42,17 +42,17 @@ export const DEFAULT_TIME = '10:00 AM'
 
 // Per-kind styling.
 export const kindMeta = {
-  service: { label: 'Service', card: 'border-indigo-100 bg-indigo-50/40', dot: 'bg-indigo-600', pill: 'bg-indigo-100 text-indigo-700' },
-  product: { label: 'Product', card: 'border-amber-100 bg-amber-50/50', dot: 'bg-amber-500', pill: 'bg-amber-100 text-amber-700' },
-  plan: { label: 'Plan', card: 'border-emerald-100 bg-emerald-50/50', dot: 'bg-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
+  service: { label: 'Service', card: 'bg-indigo-100 border-indigo-200', dot: 'bg-indigo-600', pill: 'bg-indigo-100 text-indigo-700' },
+  product: { label: 'Product', card: 'bg-amber-100 border-amber-200', dot: 'bg-amber-500', pill: 'bg-amber-100 text-amber-700' },
+  plan: { label: 'Plan', card: 'bg-emerald-100 border-emerald-200', dot: 'bg-emerald-600', pill: 'bg-emerald-100 text-emerald-700' },
 }
 const tagMeta = {
-  Service: { pill: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-600' },
-  Product: { pill: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-  Membership: { pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
-  Package: { pill: 'bg-sky-100 text-sky-700', dot: 'bg-sky-600' },
-  'Gift Card': { pill: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
-  Plan: { pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
+  Service: { card: 'bg-indigo-100 border-indigo-200', pill: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-600' },
+  Product: { card: 'bg-amber-100 border-amber-200', pill: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+  Membership: { card: 'bg-emerald-100 border-emerald-200', pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
+  Package: { card: 'bg-sky-100 border-sky-200', pill: 'bg-sky-100 text-sky-700', dot: 'bg-sky-600' },
+  'Gift Card': { card: 'bg-rose-100 border-rose-200', pill: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
+  Plan: { card: 'bg-emerald-100 border-emerald-200', pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-600' },
 }
 export const tagStyle = (tag) => tagMeta[tag] ?? tagMeta.Service
 
@@ -95,11 +95,12 @@ export const itemToRow = (it) => ({
   name: it.name,
   category: it.category,
   price: it.price,
+  basePrice: it.price,
   duration: it.duration ?? 30,
 })
 
 // ---- Searchable single-select for the primary stylist ----
-export function StylistSelect({ value, onChange, placeholder = 'Select...' }) {
+export function StylistSelect({ value, onChange, placeholder = 'Stylist', className = '' }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const ref = useRef(null)
@@ -112,7 +113,7 @@ export function StylistSelect({ value, onChange, placeholder = 'Select...' }) {
   const pick = (name) => { onChange(name); setOpen(false); setQ('') }
   return (
     <div className="relative" ref={ref}>
-      <button type="button" onClick={() => setOpen((o) => !o)} className={`${cInput} flex items-center justify-between gap-1 text-left`}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className={`${cInput} ${className} flex items-center justify-between gap-1 text-left`}>
         <span className={`truncate ${value ? 'text-gray-800' : 'text-gray-400'}`}>{value || placeholder}</span>
         <IconChevron width={14} height={14} className="shrink-0 text-gray-400" />
       </button>
