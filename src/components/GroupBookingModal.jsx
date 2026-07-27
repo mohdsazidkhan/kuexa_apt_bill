@@ -313,8 +313,8 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
 
             <div className="ml-auto flex flex-wrap items-center gap-3">
               <button onClick={onClose} className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => { setConfirmAction('waiting'); setConfirmOpen(true); }} className="rounded-lg px-5 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50">Save as Waiting</button>
-              <button onClick={() => { setConfirmAction('draft'); setConfirmOpen(true); }} className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Save as Draft</button>
+              <button onClick={() => { setConfirmAction('waiting'); setConfirmOpen(true); }} disabled={totalItems === 0} className="rounded-lg px-5 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-40">Save as Waiting</button>
+              <button onClick={() => { setConfirmAction('draft'); setConfirmOpen(true); }} disabled={totalItems === 0} className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40">Save as Draft</button>
               <button
                 onClick={() => { setConfirmAction('book'); setConfirmOpen(true); }}
                 disabled={totalItems === 0}
