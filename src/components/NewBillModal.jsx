@@ -331,7 +331,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 
   const handlePaymentClick = (action) => {
     if (hasMissingStylist) {
-      alert("Please select a Stylist for all services before checkout.")
+      alert("please select stylist in all billing items")
       return
     }
     if (hasProduct && !batchesSelected) {
@@ -522,7 +522,6 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               <div className="flex flex-1 max-w-lg gap-3 ml-auto">
                 {showSplitAndPayment && (
                   <button
-                    disabled={hasMissingStylist}
                     onClick={() => handlePaymentClick('split')}
                     className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow hover:bg-[#1a3551] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
@@ -530,11 +529,10 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                   </button>
                 )}
                 <button
-                  disabled={hasMissingStylist}
                   onClick={() => handlePaymentClick('pay')}
                   className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {hasMissingStylist ? 'Select Stylist Required' : 'Payment'}
+                  Payment
                 </button>
               </div>
             </div>
@@ -575,7 +573,6 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 
                 {showSplitAndPayment && (
                   <button
-                    disabled={hasMissingStylist}
                     onClick={() => handlePaymentClick('split')}
                     className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow hover:bg-[#1a3551] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
@@ -583,11 +580,10 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                   </button>
                 )}
                 <button
-                  disabled={hasMissingStylist}
                   onClick={() => handlePaymentClick('pay')}
                   className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {hasMissingStylist ? 'Select Stylist Required' : 'Payment'}
+                  Payment
                 </button>
               </div>
             </div>
