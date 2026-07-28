@@ -97,7 +97,7 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden p-6 text-center">
               <p className="text-sm text-gray-600 mb-6">
-                Invoice <strong className="text-yellow-500">DRAFT/25-26/002369</strong>, <strong className="text-green-600">APP/25-26/002369</strong>, <strong className="text-blue-600">BILL/000783/2025-26</strong> already created for <strong className="font-bold text-red-500">Rajat Katiyar</strong> Today. Do you still wish to continue for <strong className="font-bold text-red-500">Rajat Katiyar</strong>?
+                Invoice <a href="#" className="font-bold text-yellow-500">DRAFT/25-26/002369</a>, <strong className="text-green-600">APP/25-26/002369</strong>, <strong className="text-blue-600">BILL/000783/2025-26</strong> already created for <strong className="font-bold text-red-500">Rajat Katiyar</strong> Today. Do you still wish to continue for <strong className="font-bold text-red-500">Rajat Katiyar</strong>?
               </p>
               <div className="flex justify-center gap-3">
                 <button
@@ -143,7 +143,7 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden p-6 text-center">
               <p className="text-sm text-gray-600 mb-6">
-                Invoice <strong className="text-yellow-500">DRAFT/25-26/002369</strong>, <a href="#" className="font-bold text-green-600">APP/25-26/002369</a>, <a href="#" className="font-bold text-blue-600">BILL/000783/2025-26</a> already created for <strong className="font-bold text-red-500">Rajat Katiyar</strong> Today. Do you still wish to continue for  <strong className="font-bold text-red-500">Rajat Katiyar</strong>?
+                Invoice <a href="#" className="font-bold text-yellow-500">DRAFT/25-26/002369</a>, <a href="#" className="font-bold text-green-600">APP/25-26/002369</a>, <a href="#" className="font-bold text-blue-600">BILL/000783/2025-26</a> already created for <strong className="font-bold text-red-500">Rajat Katiyar</strong> Today. Do you still wish to continue for  <strong className="font-bold text-red-500">Rajat Katiyar</strong>?
               </p>
               <div className="flex justify-center gap-3">
                 <button
