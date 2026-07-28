@@ -324,8 +324,13 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const hasService = guests.some(g => g.rows.some(r => r.kind === 'service' || r.type === 'Service' || r.typeLabel === 'Service'))
   const hasProduct = guests.some(g => g.rows.some(r => r.kind === 'product' || r.type === 'Product' || r.typeLabel === 'Product'))
   const showSplitAndPayment = (hasService && hasProduct) || guests.length > 1
+  const hasMissingStylist = guests.some(g => g.rows.some(r => (r.kind === 'service' || r.type === 'Service' || r.typeLabel === 'Service') && !r.stylist))
 
   const handlePaymentClick = (action) => {
+    if (hasMissingStylist) {
+      alert("Please select a Stylist for all services before checkout.")
+      return
+    }
     if (hasProduct && !batchesSelected) {
       const prodItem = guests.flatMap(g => g.rows).find(it => (it.kind === 'product' || it.type === 'Product' || it.typeLabel === 'Product' || (it.name && it.name.includes('Treatment'))))
       setBatchProduct(prodItem || { name: 'Dummy Product' })
@@ -514,6 +519,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               <div className="flex flex-1 max-w-lg gap-3 ml-auto">
                 {showSplitAndPayment && (
                   <button
+                    disabled={hasMissingStylist}
                     onClick={() => handlePaymentClick('split')}
                     className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow hover:bg-[#1a3551] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
@@ -521,10 +527,11 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                   </button>
                 )}
                 <button
+                  disabled={hasMissingStylist}
                   onClick={() => handlePaymentClick('pay')}
                   className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Payment
+                  {hasMissingStylist ? 'Select Stylist Required' : 'Payment'}
                 </button>
               </div>
             </div>
@@ -565,17 +572,19 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 
                 {showSplitAndPayment && (
                   <button
-                    disabled
-                    className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    disabled={hasMissingStylist}
+                    onClick={() => handlePaymentClick('split')}
+                    className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow hover:bg-[#1a3551] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Split & Payment
                   </button>
                 )}
                 <button
-                  disabled
-                  className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={hasMissingStylist}
+                  onClick={() => handlePaymentClick('pay')}
+                  className="flex-1 rounded-lg bg-[#4a7196] py-2 text-sm font-bold text-white shadow hover:bg-[#3d6083] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Payment
+                  {hasMissingStylist ? 'Select Stylist Required' : 'Payment'}
                 </button>
               </div>
             </div>
@@ -958,7 +967,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                               value={row.stylist}
                               onChange={(v) => onRow(row.uid, { stylist: v })}
                               placeholder="Select Stylist"
-                              className="!rounded-full !h-[26px] !py-0 !text-[11px]"
+                              className={`!rounded-full !h-[26px] !py-0 !text-[11px] ${!row.stylist && (tag.toLowerCase().includes('service') || tag.toLowerCase() === 'service') ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                             />
                           </div>
                         )}
