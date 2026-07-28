@@ -377,8 +377,8 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
               <span className="font-medium text-gray-700">{pendingSplit.items.map((i) => i.name).join(', ')}</span>?
               Pick an existing client, or create a new guest.
             </p>
-            <div className="mt-5 space-y-2">
-              {pendingSplit.candidates.map((c, idx) => (
+              <div className={`space-y-2 ${pendingSplit.candidates.length > 8 ? 'max-h-[26rem] overflow-y-auto pr-1' : ''}`}>
+              {pendingSplit?.candidates?.map((c, idx) => (
                 <button
                   key={c.id}
                   onClick={() => resolveSplit(c.id)}

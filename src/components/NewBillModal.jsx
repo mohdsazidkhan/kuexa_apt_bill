@@ -598,7 +598,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
             <div className="mt-5 space-y-2">
               {/* past 8 clients the list scrolls instead of pushing the modal off-screen */}
               <div className={`space-y-2 ${pendingSplit.candidates.length > 8 ? 'max-h-[26rem] overflow-y-auto pr-1' : ''}`}>
-                {pendingSplit.candidates.map((c, idx) => (
+                {pendingSplit?.candidates?.map((c, idx) => (
                   <button
                     key={c.id}
                     onClick={() => resolveSplit(c.id)}
