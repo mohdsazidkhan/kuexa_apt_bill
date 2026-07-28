@@ -368,6 +368,11 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
             <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
               Pay: {money(balanceToPay)}
             </Chip>
+            {paidAmount > chipTotal && chipTotal > 0 && (
+              <Chip className="bg-amber-50 text-amber-600">
+                Advance: {money(round2(paidAmount - chipTotal))}
+              </Chip>
+            )}
           </div>
 
           {/* All tab: fold every client's items away, leaving just their totals */}
