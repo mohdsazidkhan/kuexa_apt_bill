@@ -378,11 +378,11 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
             <Chip className="bg-emerald-50 text-emerald-600">CBE: {money(cashbackEarned)}</Chip>
             {paidAmount > chipTotal && chipTotal > 0
               ? <Chip className="animate-pulse bg-pink-100 text-pink-600 font-bold">
-                  Advance: {money(round2(paidAmount - chipTotal))}
-                </Chip>
+                Advance: {money(round2(paidAmount - chipTotal))}
+              </Chip>
               : <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
-                  Pay: {money(balanceToPay)}
-                </Chip>
+                Pay: {money(balanceToPay)}
+              </Chip>
             }
           </div>
 
@@ -911,12 +911,12 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             <div className="w-max min-w-full pb-4">
               <div className="flex items-center gap-2.5 px-2 pb-2 text-[11px] font-bold text-black">
                 <div className="w-48 shrink-0">Service / Item</div>
-                <div className="w-32 shrink-0 text-center">Stylist</div>
+                <div className="w-28 shrink-0 text-center">Stylist</div>
                 <div className="w-24 shrink-0 text-center">Sale By</div>
                 <div className="w-16 shrink-0 text-center">Price</div>
                 <div className="w-14 shrink-0 text-center">Qty.</div>
                 <div className="w-16 shrink-0 text-center">Amount</div>
-                <div className="w-28 shrink-0 text-center">Disc. Type</div>
+                <div className="w-24 shrink-0 text-center">Disc. Type</div>
                 <div className="w-28 shrink-0 text-center">Disc. Amt.</div>
                 <div className="w-20 shrink-0 text-center">Amt. After Disc.</div>
                 <div className="w-16 shrink-0 text-center">Tax Amt.</div>
@@ -966,7 +966,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
 
                         {/* Stylist */}
                         {row.kind === 'service' && (
-                          <div className="w-32 shrink-0">
+                          <div className="w-28 shrink-0">
                             <StylistSelect
                               value={row.stylist}
                               onChange={(v) => onRow(row.uid, { stylist: v })}
@@ -1031,7 +1031,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Disc Type */}
-                        <div className="w-28 shrink-0">
+                        <div className="w-24 shrink-0">
                           <MultiSearchSelect
                             options={[
                               'Flat',
@@ -1039,7 +1039,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                               'Prive Member',
                               '10%',
                               '20%',
-                              'Price Package',
+                              'Price Package Ⓢ',
                               'Gold Member Ⓢ'
                             ].filter(Boolean)}
                             value={Array.isArray(discType) ? discType : [discType || 'Flat']}
