@@ -13,7 +13,7 @@ import PaymentMethods from './PaymentMethods'
 import ConfirmDialog from './ConfirmDialog'
 import PendingBillsModal, { billPending, PENDING_BILLS } from './PendingBillsModal'
 import LoadAppointmentModal, { IconCalendar } from './LoadAppointmentModal'
-import { currency, stylists } from '../data/services'
+import { currency, stylists, customers } from '../data/services'
 import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
   FUTURE_DATES, TIME_SLOTS, DEFAULT_TIME, tagStyle, kindMeta, itemToRow, GenderBadge, serviceGender,
@@ -195,7 +195,15 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     }))
     const patch = { rows: [...activeGuest.rows, ...rows] }
     if (!activeGuest.customer && appt.customer && appt.customer !== 'Group') {
-      patch.customer = { id: appt.id, name: appt.customer, phone: appt.phone }
+      const matched = customers.find(
+        (c) => c.phone === appt.phone || c.name === appt.customer
+      )
+      patch.customer = {
+        id: matched?.id ?? appt.id,
+        name: appt.customer,
+        phone: appt.phone,
+        gender: matched?.gender ?? null,
+      }
     }
     patchGuest(activeGuest.id, patch)
   }
