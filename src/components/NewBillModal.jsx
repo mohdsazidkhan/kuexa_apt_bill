@@ -447,6 +447,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                 onSaveDraft={onClose}
                 onPrintAndSave={handleBook}
                 disabled={totalItems === 0}
+                customer={guests[0]?.customer ?? null}
               />
             </div>
           ) : (
@@ -1226,8 +1227,11 @@ function CheckoutPanel({
   pendingBills = [], onPendingBills,
   remarks, setRemarks,
   onSaveDraft, onPrintAndSave,
-  disabled
+  disabled,
+  customer = null,
 }) {
+  // Demo: only Rajat Katiyar (id: c1) has loyalty / gift card / advance benefits
+  const hasBenefits = customer?.id === 'c1'
   const totalSaved = round2(Math.min(subtotal, packageDiscount + (override ? overrideDiscount : 0)));
   const afterDiscount = round2(Math.max(0, subtotal - totalSaved));
   const tax = round2(afterDiscount * 0.18); // 18% tax (CGST + SGST)
@@ -1291,7 +1295,7 @@ function CheckoutPanel({
           </div>
         </div>
         <div className="mt-3">
-          <PaymentMethods key={payReset} netTotal={netTotal} onPaidChange={onPaidChange} />
+          <PaymentMethods key={payReset} netTotal={netTotal} onPaidChange={onPaidChange} hasBenefits={hasBenefits} />
         </div>
       </div>
     </div>

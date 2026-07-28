@@ -59,7 +59,7 @@ const IconMinus = (props) => (
   </svg>
 )
 
-export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
+export default function PaymentMethods({ netTotal = 0, onPaidChange, hasBenefits = false }) {
   const [rows, setRows] = useState(BASE_ROWS)
   const [checked, setChecked] = useState(() => new Set())
 
@@ -127,117 +127,119 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
   const paymentRows = rows.filter((r) => !BENEFIT_TYPES.includes(r.type))
 
   const renderRow = (row) => {
-      const idx = rows.indexOf(row)
-      const meta = TYPES[row.type]
-      const active = checked.has(row.id)
-      const sub = subLabel(row.type)
-      const grid = BENEFIT_TYPES.includes(row.type) ? BENEFIT_GRID : GRID
-      return (
-        <div
-          key={row.id}
-          className={`${grid} items-center gap-2 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm ${active ? 'border-[#4a7196]' : 'border-gray-200'
-            }`}
-        >
-          <label className="flex min-w-0 cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={active}
-              onChange={() => toggle(row)}
-              className="h-4 w-4 shrink-0 rounded-full border-gray-300 text-[#2c4c6b] focus:ring-[#4a7196]"
-            />
-            {/* label, account no. and balance all stay on one line */}
-            <span className="min-w-0 truncate whitespace-nowrap text-sm text-gray-600">
-              <span className="font-semibold text-gray-700">{meta.label}</span>
-              {inlineNo(row.type) && <span className="ml-1 font-medium text-[12px] text-gray-600">({inlineNo(row.type)})</span>}
-              {isExtra(row, idx) && <span className="ml-1  font-medium text-[12px] text-gray-600">#{rows.slice(0, idx).filter((r) => r.type === row.type).length + 1}</span>}
-              {sub && <span className="ml-1 text-[12px]  font-medium text-gray-600">{sub}</span>}
-            </span>
-          </label>
+    const idx = rows.indexOf(row)
+    const meta = TYPES[row.type]
+    const active = checked.has(row.id)
+    const sub = subLabel(row.type)
+    const grid = BENEFIT_TYPES.includes(row.type) ? BENEFIT_GRID : GRID
+    return (
+      <div
+        key={row.id}
+        className={`${grid} items-center gap-2 rounded-lg border bg-white px-2.5 py-1.5 shadow-sm ${active ? 'border-[#4a7196]' : 'border-gray-200'
+          }`}
+      >
+        <label className="flex min-w-0 cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={() => toggle(row)}
+            className="h-4 w-4 shrink-0 rounded-full border-gray-300 text-[#2c4c6b] focus:ring-[#4a7196]"
+          />
+          {/* label, account no. and balance all stay on one line */}
+          <span className="min-w-0 truncate whitespace-nowrap text-sm text-gray-600">
+            <span className="font-semibold text-gray-700">{meta.label}</span>
+            {inlineNo(row.type) && <span className="ml-1 font-medium text-[12px] text-gray-600">({inlineNo(row.type)})</span>}
+            {isExtra(row, idx) && <span className="ml-1  font-medium text-[12px] text-gray-600">#{rows.slice(0, idx).filter((r) => r.type === row.type).length + 1}</span>}
+            {sub && <span className="ml-1 text-[12px]  font-medium text-gray-600">{sub}</span>}
+          </span>
+        </label>
 
+        <div className="relative">
+          <input
+            type="number"
+            value={row.amount}
+            onChange={(e) => {
+              let val = e.target.value
+              if (BENEFIT_TYPES.includes(row.type)) {
+                const max = maxBenefit(row.type)
+                if (Number(val) > max) val = max
+              }
+              patch(row.id, { amount: val })
+            }}
+            onFocus={() => setChecked((c) => (c.has(row.id) ? c : new Set(c).add(row.id)))}
+            placeholder="0.00"
+            className={amountPill}
+          />
+        </div>
+
+        {!BENEFIT_TYPES.includes(row.type) && (meta.ref ? (
           <div className="relative">
             <input
-              type="number"
-              value={row.amount}
-              onChange={(e) => {
-                let val = e.target.value
-                if (BENEFIT_TYPES.includes(row.type)) {
-                  const max = maxBenefit(row.type)
-                  if (Number(val) > max) val = max
-                }
-                patch(row.id, { amount: val })
-              }}
-              onFocus={() => setChecked((c) => (c.has(row.id) ? c : new Set(c).add(row.id)))}
-              placeholder="0.00"
-              className={amountPill}
+              type="text"
+              value={row.ref}
+              onChange={(e) => patch(row.id, { ref: e.target.value })}
+              className={`${pill} pr-8`}
             />
+            <IconBarcode className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
+        ) : (
+          <span />
+        ))}
 
-          {!BENEFIT_TYPES.includes(row.type) && (meta.ref ? (
-            <div className="relative">
-              <input
-                type="text"
-                value={row.ref}
-                onChange={(e) => patch(row.id, { ref: e.target.value })}
-                className={`${pill} pr-8`}
-              />
-              <IconBarcode className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            </div>
-          ) : (
-            <span />
-          ))}
+        {!BENEFIT_TYPES.includes(row.type) && (meta.tip ? (
+          <input
+            type="number"
+            value={row.tip}
+            onChange={(e) => patch(row.id, { tip: e.target.value })}
+            placeholder="0.00"
+            className={tipPill}
+          />
+        ) : (
+          <span />
+        ))}
 
-          {!BENEFIT_TYPES.includes(row.type) && (meta.tip ? (
-            <input
-              type="number"
-              value={row.tip}
-              onChange={(e) => patch(row.id, { tip: e.target.value })}
-              placeholder="0.00"
-              className={tipPill}
-            />
-          ) : (
-            <span />
-          ))}
-
-          {/* trailing cell: + adds one more row of this type, × drops an extra one */}
-          <div className="flex items-center justify-end gap-1 text-sm text-gray-600">
-            {isExtra(row, idx) && (
-              <button
-                onClick={() => removeRow(row.id)}
-                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-gray-400 hover:border-rose-300 hover:text-rose-500"
-                title={`Remove this ${meta.label} row`}
-              >
-                <IconMinus />
-              </button>
-            )}
-            {ADDABLE.includes(row.type) && isLastOfType(row, idx) && (
-              <button
-                onClick={() => addRow(row.type)}
-                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:border-[#4a7196] hover:bg-[#eef3f8] hover:text-[#2c4c6b]"
-                title={`Add another ${meta.label}`}
-              >
-                <IconPlus />
-              </button>
-            )}
-          </div>
+        {/* trailing cell: + adds one more row of this type, × drops an extra one */}
+        <div className="flex items-center justify-end gap-1 text-sm text-gray-600">
+          {isExtra(row, idx) && (
+            <button
+              onClick={() => removeRow(row.id)}
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-gray-400 hover:border-rose-300 hover:text-rose-500"
+              title={`Remove this ${meta.label} row`}
+            >
+              <IconMinus />
+            </button>
+          )}
+          {ADDABLE.includes(row.type) && isLastOfType(row, idx) && (
+            <button
+              onClick={() => addRow(row.type)}
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:border-[#4a7196] hover:bg-[#eef3f8] hover:text-[#2c4c6b]"
+              title={`Add another ${meta.label}`}
+            >
+              <IconPlus />
+            </button>
+          )}
         </div>
-      )
+      </div>
+    )
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2 bg-gray-100 p-2">
-        {/* Benefits & Balances — soft purple tint */}
-        <div className="bg-violet-50 rounded-lg p-3 border border-gray-400">
-          <div className={`${BENEFIT_GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-500`}>
-            <span>Benefits &amp; Balances</span>
-            <span className="text-center">Amount</span>
-            <span />
+    <div className="rounded overflow-hidden">
+      <div className={`grid grid-cols-1 gap-2 ${hasBenefits ? 'xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]' : ''}`}>
+        {/* Benefits & Balances — only shown when hasBenefits */}
+        {hasBenefits && (
+          <div className="bg-violet-100 rounded-lg p-3 border border-gray-300">
+            <div className={`${BENEFIT_GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-500`}>
+              <span>Benefits &amp; Balances</span>
+              <span className="text-center">Amount</span>
+              <span />
+            </div>
+            <div className="space-y-1.5">{benefitRows.map(renderRow)}</div>
           </div>
-          <div className="space-y-1.5">{benefitRows.map(renderRow)}</div>
-        </div>
+        )}
 
         {/* Payment Mode — soft sky tint */}
-        <div className="bg-sky-50 rounded-lg p-3 border border-gray-400">
+        <div className="bg-sky-100 rounded-lg p-3 border border-gray-300">
           <div className={`${GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-500`}>
             <span>Payment Mode</span>
             <span className="text-center">Amount</span>
