@@ -232,7 +232,7 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
 
       <div className="flex items-center justify-between px-2.5 pt-2 text-[13px]">
         <span className="text-gray-600">Paid <span className="font-semibold text-gray-800">{currency(paid)}</span> of {currency(netTotal)}</span>
-        <span className={`font-bold ${remaining === 0 && paid > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+        <span className={`font-bold ${paid > netTotal ? 'animate-pulse text-pink-600' : remaining === 0 && paid > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
           {paid > netTotal
             ? `Advance: ${currency(paid - netTotal)}`
             : remaining === 0 && paid > 0

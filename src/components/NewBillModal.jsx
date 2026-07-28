@@ -366,7 +366,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
             </Chip>
             <Chip className="bg-emerald-50 text-emerald-600">CBE: {money(cashbackEarned)}</Chip>
             {paidAmount > chipTotal && chipTotal > 0
-              ? <Chip className="animate-pulse bg-amber-100 text-amber-600 font-bold">
+              ? <Chip className="animate-pulse bg-pink-100 text-pink-600 font-bold">
                   Advance: {money(round2(paidAmount - chipTotal))}
                 </Chip>
               : <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
