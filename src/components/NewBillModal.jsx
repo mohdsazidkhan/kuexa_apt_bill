@@ -596,18 +596,21 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               Pick an existing client, or create a new guest.
             </p>
             <div className="mt-5 space-y-2">
-              {pendingSplit.candidates.map((c, idx) => (
-                <button
-                  key={c.id}
-                  onClick={() => resolveSplit(c.id)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium ${idx === 0
-                    ? 'bg-[#4a7196] text-white shadow hover:bg-[#3d6083]'
-                    : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
-                >
-                  <IconUsers width={15} height={15} /> Add to {c.name}
-                </button>
-              ))}
+              {/* past 8 clients the list scrolls instead of pushing the modal off-screen */}
+              <div className={`space-y-2 ${pendingSplit.candidates.length > 8 ? 'max-h-[26rem] overflow-y-auto pr-1' : ''}`}>
+                {pendingSplit.candidates.map((c, idx) => (
+                  <button
+                    key={c.id}
+                    onClick={() => resolveSplit(c.id)}
+                    className={`flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium ${idx === 0
+                      ? 'bg-[#4a7196] text-white shadow hover:bg-[#3d6083]'
+                      : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                  >
+                    <IconUsers width={15} height={15} /> Add to {c.name}
+                  </button>
+                ))}
+              </div>
               <button
                 onClick={() => resolveSplit('new')}
                 className="flex w-full items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
