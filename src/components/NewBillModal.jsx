@@ -365,14 +365,14 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               LPE: {money(loyaltyPts)} ({loyaltyPts} Pts.)
             </Chip>
             <Chip className="bg-emerald-50 text-emerald-600">CBE: {money(cashbackEarned)}</Chip>
-            <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
-              Pay: {money(balanceToPay)}
-            </Chip>
-            {paidAmount > chipTotal && chipTotal > 0 && (
-              <Chip className="bg-amber-50 text-amber-600">
-                Advance: {money(round2(paidAmount - chipTotal))}
-              </Chip>
-            )}
+            {paidAmount > chipTotal && chipTotal > 0
+              ? <Chip className="animate-pulse bg-amber-100 text-amber-600 font-bold">
+                  Advance: {money(round2(paidAmount - chipTotal))}
+                </Chip>
+              : <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
+                  Pay: {money(balanceToPay)}
+                </Chip>
+            }
           </div>
 
           {/* All tab: fold every client's items away, leaving just their totals */}
