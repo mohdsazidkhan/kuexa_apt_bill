@@ -224,19 +224,21 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
   }
 
   return (
-    <div className="rounded-xl bg-gray-100/70 p-2.5">
-      <div className="grid grid-cols-1 gap-x-4 gap-y-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div>
-          <div className={`${BENEFIT_GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold text-gray-600`}>
-            <span>Benefits & Balances</span>
+    <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] divide-y xl:divide-y-0 xl:divide-x divide-gray-200">
+        {/* Benefits & Balances — soft purple tint */}
+        <div className="bg-violet-50/60 p-3">
+          <div className={`${BENEFIT_GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-500`}>
+            <span>Benefits &amp; Balances</span>
             <span className="text-center">Amount</span>
             <span />
           </div>
           <div className="space-y-1.5">{benefitRows.map(renderRow)}</div>
         </div>
 
-        <div>
-          <div className={`${GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold text-gray-600`}>
+        {/* Payment Mode — soft sky tint */}
+        <div className="bg-sky-50/60 p-3">
+          <div className={`${GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-500`}>
             <span>Payment Mode</span>
             <span className="text-center">Amount</span>
             <span className="text-center">Card/UPI/Cheque No.</span>
@@ -247,8 +249,7 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
         </div>
       </div>
 
-
-      <div className="flex items-center justify-between px-2.5 pt-2 text-[13px]">
+      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-2 text-[13px]">
         <span className="text-gray-600">Paid <span className="font-semibold text-gray-800">{currency(paid)}</span> of {currency(netTotal)}</span>
         <span className={`font-bold ${paid > netTotal ? 'animate-pulse text-pink-600' : remaining === 0 && paid > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
           {paid > netTotal
