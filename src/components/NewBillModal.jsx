@@ -646,7 +646,7 @@ function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount
               {g.customer?.gender && (
                 <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">{g.customer.gender}</span>
               )}
-              {g.customer?.phone && <span className="text-xs text-gray-400">{g.customer.phone}</span>}
+              {g.customer?.phone && <span className="text-xs font-medium text-gray-600">{g.customer.phone}</span>}
               {g.customer && (
                 <button
                   onClick={() => onViewOffers?.(g.customer)}

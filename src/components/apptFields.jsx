@@ -4,7 +4,7 @@ import { IconChevron, IconSearch } from './Icons'
 
 // Shared field styles + controls used by the appointment & group-booking drawers.
 export const cInput =
-  'w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-indigo-400'
+  'w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-800 outline-none placeholder:text-gray-600 focus:border-indigo-400'
 
 export const Field = ({ label, required, className = '', children }) => (
   <div className={className}>
@@ -126,7 +126,7 @@ export function StylistSelect({ value, onChange, placeholder = 'Stylist', classN
   return (
     <div className="relative" ref={ref}>
       <button type="button" onClick={handleToggle} className={`${cInput} ${className} flex items-center justify-between gap-1 text-left`}>
-        <span className={`truncate ${value ? 'text-gray-800' : 'text-gray-400'}`}>{value || placeholder}</span>
+        <span className={`truncate ${value ? 'text-gray-800' : 'text-gray-600'}`}>{value || placeholder}</span>
         <IconChevron width={14} height={14} className="shrink-0 text-gray-400" />
       </button>
       {open && (
@@ -176,7 +176,7 @@ export function AssistantSelect({ value = [], onChange }) {
   return (
     <div className="relative" ref={ref}>
       <button type="button" onClick={handleToggle} title={value.length ? value.join(', ') : undefined} className={`${cInput} flex items-center justify-between gap-1 text-left`}>
-        <span className={`truncate ${value.length ? 'text-gray-800' : 'text-gray-400'}`}>{label}</span>
+        <span className={`truncate ${value.length ? 'text-gray-800' : 'text-gray-600'}`}>{label}</span>
         <IconChevron width={14} height={14} className="shrink-0 text-gray-400" />
       </button>
       {open && (
@@ -227,7 +227,7 @@ export function SearchSelect({ value, onChange, options, placeholder = 'Select..
   return (
     <div className="relative" ref={ref}>
       <button type="button" onClick={handleToggle} className={`${cInput} flex items-center justify-between gap-1 text-left`}>
-        <span className={`truncate ${value ? 'text-gray-800' : 'text-gray-400'}`}>{value || placeholder}</span>
+        <span className={`truncate ${value ? 'text-gray-800' : 'text-gray-600'}`}>{value || placeholder}</span>
         <IconChevron width={14} height={14} className="shrink-0 text-gray-400" />
       </button>
       {open && (
