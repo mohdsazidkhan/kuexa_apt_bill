@@ -12,6 +12,7 @@ import OverrideDiscountModal from './OverrideDiscountModal'
 import PaymentMethods from './PaymentMethods'
 import ConfirmDialog from './ConfirmDialog'
 import PendingBillsModal, { billPending, PENDING_BILLS } from './PendingBillsModal'
+import LoadAppointmentModal, { IconCalendar } from './LoadAppointmentModal'
 import { currency, stylists } from '../data/services'
 import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
@@ -47,6 +48,16 @@ const taxRateOf = (r) => {
 }
 const rowInclTax = (r) => round2(Math.max(0, rowAmount(r) - lineDiscount(r)) * (1 + taxRateOf(r)))
 const guestInclTax = (g) => round2(g.rows.reduce((s, r) => s + rowInclTax(r), 0))
+
+const IconChevron = ({ className = '', ...props }) => (
+  <svg
+    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    className={`transition-transform ${className}`} {...props}
+  >
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+)
 
 // Rounded stat chip in the drawer header (Total Bill / LPE / CBE / Balance To Pay).
 const Chip = ({ className = '', children }) => (
@@ -100,6 +111,8 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [overrideOpen, setOverrideOpen] = useState(false)
   const [remarks, setRemarks] = useState('')
   const [addFnFOpen, setAddFnFOpen] = useState(false)
+  const [loadApptOpen, setLoadApptOpen] = useState(false)
+  const [itemsCollapsed, setItemsCollapsed] = useState(false) // All tab: hide item rows, keep totals
   const [offersApplied, setOffersApplied] = useState(false)
   const [batchProduct, setBatchProduct] = useState(null)
   const [pendingPaymentAction, setPendingPaymentAction] = useState(null)
@@ -168,6 +181,23 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         .map((g) => ({ id: g.id, name: g.customer?.name || g.label }))
       setPendingSplit({ gender: pendGender, items: pendItems, candidates })
     }
+  }
+
+  // Load an appointment into the active guest: its services become rows, and the
+  // appointment's client fills the guest if none was picked yet.
+  const loadAppointment = (appt) => {
+    if (!activeGuest) return
+    const rows = appt.services.map((s) => ({
+      ...itemToRow({ kind: 'service', name: s.name, category: s.category, price: s.price, duration: s.duration }),
+      stylist: s.stylist ? s.stylist.charAt(0) + s.stylist.slice(1).toLowerCase() : '',
+      date: s.date,
+      time: s.time,
+    }))
+    const patch = { rows: [...activeGuest.rows, ...rows] }
+    if (!activeGuest.customer && appt.customer && appt.customer !== 'Group') {
+      patch.customer = { id: appt.id, name: appt.customer, phone: appt.phone }
+    }
+    patchGuest(activeGuest.id, patch)
   }
 
   // Resolve the confirm: target = a guest id, or 'new'.
@@ -319,20 +349,33 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
           <button onClick={onClose} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
             <IconClose width={18} height={18} />
           </button>
-          <IconUsers width={18} height={18} className="text-indigo-600" />
           <h2 className="shrink-0 text-base font-semibold text-gray-800">New Bill</h2>
 
           {/* Live bill chips: grand total, loyalty / cashback earned, and what's left to pay */}
           <div className="hidden shrink-0 items-center gap-2 xl:flex">
-            <Chip className="bg-slate-100 text-[#1e3a56]">Total Bill: {money(chipTotal)}</Chip>
             <Chip className="bg-emerald-50 text-emerald-600">
               LPE: {money(loyaltyPts)} ({loyaltyPts} Pts.)
             </Chip>
             <Chip className="bg-emerald-50 text-emerald-600">CBE: {money(cashbackEarned)}</Chip>
             <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
-              Balance To Pay: {money(balanceToPay)}
+              Pay: {money(balanceToPay)}
             </Chip>
           </div>
+
+          {/* All tab: fold every client's items away, leaving just their totals */}
+          {showAll && (
+            <button
+              onClick={() => setItemsCollapsed((c) => !c)}
+              title={itemsCollapsed ? 'Show items of every client' : 'Hide items, keep totals'}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${itemsCollapsed
+                ? 'animate-pulse border-amber-300 bg-amber-100 text-amber-700 hover:bg-amber-200'
+                : 'border-indigo-300 bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                }`}
+            >
+              <IconChevron className={itemsCollapsed ? '-rotate-90' : ''} />
+              {itemsCollapsed ? 'Show Clients' : 'Hide Clients'}
+            </button>
+          )}
 
 
 
@@ -375,7 +418,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-2">
           {showAll ? (
             <div className="space-y-3">
-              <AllSummary guests={guests} guestName={guestName} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
+              <AllSummary guests={guests} guestName={guestName} collapsed={itemsCollapsed} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
 
               <CheckoutPanel
                 subtotal={grossTotal}
@@ -412,6 +455,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               }}
               onViewOffers={() => setOffersView(activeGuest.customer)}
               onAddFnF={() => setAddFnFOpen(true)}
+              onLoadAppt={() => setLoadApptOpen(true)}
               total={guestTotal(activeGuest)}
               rowDiscountAmount={rowDiscountAmount}
             />
@@ -423,7 +467,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
           {showAll ? (
             <div className="flex items-center justify-between gap-4">
               <div className="hidden sm:block flex-shrink-0">
-                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Net Total</div>
+                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Bill</div>
                 <div className="text-2xl font-bold text-indigo-600">
                   {currency(currentNetTotal)}
                 </div>
@@ -578,6 +622,12 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         onClose={() => setOverrideOpen(false)}
         onApply={setOverride}
       />
+      {/* Pull an existing appointment's services into the active guest */}
+      <LoadAppointmentModal
+        open={loadApptOpen}
+        onClose={() => setLoadApptOpen(false)}
+        onLoad={loadAppointment}
+      />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
       <ViewOffersDrawer open={!!offersView} onClose={() => setOffersView(null)} customer={offersView} />
@@ -627,7 +677,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 }
 
 // ---- All tab: summary of every guest ----
-function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount }) {
+function AllSummary({ guests, guestName, collapsed, onOpen, onViewOffers, rowDiscountAmount }) {
   return (
     <div className={`grid grid-cols-1 gap-3 ${guests?.length > 1 ? 'lg:grid-cols-2' : ''}`}>
       {guests?.map((g, idx) => (
@@ -665,7 +715,7 @@ function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount
             <div className="mt-2 text-xs text-gray-400">No items added.</div>
           ) : (
             <div className="mt-2 space-y-1.5">
-              {g.rows.map((r) => {
+              {!collapsed && g.rows.map((r) => {
                 const getRowStyle = (t) => {
                   const label = (t || 'Service').toLowerCase()
                   if (label.includes('service')) return 'bg-[#cce5ff] border-[#b8daff]'
@@ -732,7 +782,7 @@ function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, total, rowDiscountAmount, open }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, onLoadAppt, total, rowDiscountAmount, open }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -767,6 +817,16 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             }
           >
             <CustomerSearch autoFocus={true} focusTrigger={open} value={guest.customer} onChange={onCustomer} />
+          </Field>
+
+          {/* Always available — loading an appointment can fill the client itself */}
+          <Field label="&nbsp;">
+            <button
+              onClick={onLoadAppt}
+              className="flex h-[34px] w-full items-center justify-center gap-1.5 rounded-md border border-sky-300 bg-white px-2 text-xs font-bold text-[#2c4c6b] hover:bg-sky-50"
+            >
+              <IconCalendar width={14} height={14} /> Load from Appt.
+            </button>
           </Field>
 
           {guest.customer && (

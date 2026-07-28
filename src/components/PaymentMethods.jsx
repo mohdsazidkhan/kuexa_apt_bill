@@ -210,7 +210,7 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
       <div className="grid grid-cols-1 gap-x-4 gap-y-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div>
           <div className={`${BENEFIT_GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold text-gray-600`}>
-            <span>Benefit Type</span>
+            <span>Benefits & Balances</span>
             <span className="text-center">Amount</span>
             <span />
           </div>
@@ -219,7 +219,7 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
 
         <div>
           <div className={`${GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold text-gray-600`}>
-            <span>Payment Type</span>
+            <span>Payment Mode</span>
             <span className="text-center">Amount</span>
             <span className="text-center">Card/UPI/Cheque No.</span>
             <span className="text-center leading-tight">Tip Amount</span>
