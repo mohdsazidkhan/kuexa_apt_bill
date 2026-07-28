@@ -95,11 +95,38 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
       <>
         {confirmClient && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden p-6 text-center">
-              <p className="text-sm text-gray-600 mb-6">
-                Invoice <a href="#" className="font-bold text-yellow-500">DRAFT/25-26/002369</a>, <strong className="text-green-600">APP/25-26/002369</strong>, <strong className="text-blue-600">BILL/000783/2025-26</strong> already created for <strong className="font-bold text-red-500">Rajat Katiyar</strong> Today. Do you still wish to continue for <strong className="font-bold text-red-500">Rajat Katiyar</strong>?
-              </p>
-              <div className="flex justify-center gap-3">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gray-50 border-b border-gray-100 px-5 py-3.5 text-center">
+                <p className="text-sm font-semibold text-gray-700">
+                  Already created today for{' '}
+                  <span className="text-red-500">Rajat Katiyar</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Do you still wish to continue?</p>
+              </div>
+              {/* 3 Cards */}
+              <div className="grid grid-cols-3 gap-3 p-4">
+                {/* Draft */}
+                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-yellow-300 bg-yellow-50 p-3 hover:bg-yellow-100 transition-colors">
+                  <span className="text-2xl">📝</span>
+                  <span className="text-[11px] font-bold text-yellow-600 uppercase tracking-wide">Draft</span>
+                  <span className="text-[10px] text-yellow-500 font-medium text-center leading-tight">DRAFT/25-26/002369</span>
+                </a>
+                {/* Appointment */}
+                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 p-3 hover:bg-green-100 transition-colors">
+                  <span className="text-2xl">📅</span>
+                  <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appointment</span>
+                  <span className="text-[10px] text-green-500 font-medium text-center leading-tight">APP/25-26/002369</span>
+                </a>
+                {/* Bill */}
+                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 p-3 hover:bg-blue-100 transition-colors">
+                  <span className="text-2xl">🧾</span>
+                  <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide">Bill</span>
+                  <span className="text-[10px] text-blue-500 font-medium text-center leading-tight">BILL/000783/2025-26</span>
+                </a>
+              </div>
+              {/* Actions */}
+              <div className="flex justify-center gap-3 border-t border-gray-100 px-5 py-3.5">
                 <button
                   onClick={() => setConfirmClient(null)}
                   className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
@@ -141,11 +168,38 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
       <div className="relative w-full">
         {confirmClient && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-lg bg-white shadow-xl overflow-hidden p-6 text-center">
-              <p className="text-sm text-gray-600 mb-6">
-                Invoice <a href="#" className="font-bold text-yellow-500">DRAFT/25-26/002369</a>, <a href="#" className="font-bold text-green-600">APP/25-26/002369</a>, <a href="#" className="font-bold text-blue-600">BILL/000783/2025-26</a> already created for <strong className="font-bold text-red-500">Rajat Katiyar</strong> Today. Do you still wish to continue for  <strong className="font-bold text-red-500">Rajat Katiyar</strong>?
-              </p>
-              <div className="flex justify-center gap-3">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gray-50 border-b border-gray-100 px-5 py-3.5 text-center">
+                <p className="text-sm font-semibold text-gray-700">
+                  Already created today for{' '}
+                  <span className="text-red-500">Rajat Katiyar</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Do you still wish to continue?</p>
+              </div>
+              {/* 3 Cards */}
+              <div className="grid grid-cols-3 gap-3 p-4">
+                {/* Draft */}
+                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-yellow-300 bg-yellow-50 p-3 hover:bg-yellow-100 transition-colors">
+                  <span className="text-2xl">📝</span>
+                  <span className="text-[11px] font-bold text-yellow-600 uppercase tracking-wide">Draft</span>
+                  <span className="text-[10px] text-yellow-500 font-medium text-center leading-tight">DRAFT/25-26/002369</span>
+                </a>
+                {/* Appointment */}
+                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 p-3 hover:bg-green-100 transition-colors">
+                  <span className="text-2xl">📅</span>
+                  <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appointment</span>
+                  <span className="text-[10px] text-green-500 font-medium text-center leading-tight">APP/25-26/002369</span>
+                </a>
+                {/* Bill */}
+                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 p-3 hover:bg-blue-100 transition-colors">
+                  <span className="text-2xl">🧾</span>
+                  <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide">Bill</span>
+                  <span className="text-[10px] text-blue-500 font-medium text-center leading-tight">BILL/000783/2025-26</span>
+                </a>
+              </div>
+              {/* Actions */}
+              <div className="flex justify-center gap-3 border-t border-gray-100 px-5 py-3.5">
                 <button
                   onClick={() => setConfirmClient(null)}
                   className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
