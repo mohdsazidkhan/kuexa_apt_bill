@@ -641,6 +641,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         open={loadApptOpen}
         onClose={() => setLoadApptOpen(false)}
         onLoad={loadAppointment}
+        initialQuery={activeGuest?.customer?.phone ?? ''}
       />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />

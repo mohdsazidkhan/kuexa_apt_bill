@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { appointments } from '../data/appointments'
 import { IconClose } from './Icons'
 
@@ -30,8 +30,13 @@ const IconSearch = (props) => (
   </svg>
 )
 
-export default function LoadAppointmentModal({ open, onClose, onLoad }) {
-  const [q, setQ] = useState('')
+export default function LoadAppointmentModal({ open, onClose, onLoad, initialQuery = '' }) {
+  const [q, setQ] = useState(initialQuery)
+
+  // Reset search to customer phone every time the modal opens
+  useEffect(() => {
+    if (open) setQ(initialQuery)
+  }, [open, initialQuery])
 
   if (!open) return null
 
