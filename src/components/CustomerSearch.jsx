@@ -124,7 +124,7 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                 <div className="flex flex-col gap-2 rounded-lg border border-green-300 bg-green-50 p-2">
                   <div className="flex flex-col items-center">
                     <span className="text-2xl">📅</span>
-                    <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appts</span>
+                    <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appointments</span>
                   </div>
                   <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent">
                     <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002369</a>
@@ -150,16 +150,16 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                 </div>
               </div>
               {/* Actions */}
-              <div className="flex justify-center gap-3 border-t border-gray-100 px-5 py-3.5">
+              <div className="grid grid-cols-2 gap-3 border-t border-gray-100 px-5 py-3.5">
                 <button
                   onClick={() => setConfirmClient(null)}
-                  className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
+                  className="w-full py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
                 >
                   No
                 </button>
                 <button
                   onClick={() => proceedPick(confirmClient)}
-                  className="px-6 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full"
+                  className="w-full py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full"
                 >
                   Yes
                 </button>
@@ -221,7 +221,7 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                 <div className="flex flex-col gap-2 rounded-lg border border-green-300 bg-green-50 p-2">
                   <div className="flex flex-col items-center">
                     <span className="text-2xl">📅</span>
-                    <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appts</span>
+                    <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appointments</span>
                   </div>
                   <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent">
                     <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002369</a>
@@ -247,16 +247,16 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                 </div>
               </div>
               {/* Actions */}
-              <div className="flex justify-center gap-3 border-t border-gray-100 px-5 py-3.5">
+              <div className="grid grid-cols-2 gap-3 border-t border-gray-100 px-5 py-3.5">
                 <button
                   onClick={() => setConfirmClient(null)}
-                  className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
+                  className="w-full py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full"
                 >
                   No
                 </button>
                 <button
                   onClick={() => proceedPick(confirmClient)}
-                  className="px-6 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full"
+                  className="w-full py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full"
                 >
                   Yes
                 </button>
