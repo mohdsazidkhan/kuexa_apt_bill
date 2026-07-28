@@ -98,7 +98,6 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [pendingSplit, setPendingSplit] = useState(null) // Rule 3 confirm: { gender, items, existingId, existingName }
   const [override, setOverride] = useState(null) // bill-level discount override { type, value, couponName, remarks }
   const [overrideOpen, setOverrideOpen] = useState(false)
-  const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
   const [addFnFOpen, setAddFnFOpen] = useState(false)
   const [offersApplied, setOffersApplied] = useState(false)
@@ -260,7 +259,6 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     setPaymentMode('Cash')
     setSplitPayment(false)
     setSplitRows([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
-    setSaleBy('')
     setRemarks('')
     setOffersApplied(false)
   }
@@ -389,7 +387,6 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
                 payReset={payReset}
                 pendingBills={pendingBills}
                 onPendingBills={() => setPendingBillsOpen(true)}
-                saleBy={saleBy} setSaleBy={setSaleBy}
                 remarks={remarks} setRemarks={setRemarks}
                 onSaveDraft={onClose}
                 onPrintAndSave={handleBook}
@@ -678,17 +675,29 @@ function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount
                 const rowStyle = getRowStyle(r.typeLabel)
                 return (
                   <div key={r.uid} className={`flex items-center justify-between gap-2 rounded px-2 py-1 text-sm border ${rowStyle}`}>
-                    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      <span className="font-medium text-gray-700">{r.name}</span>
+                    <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
+                      {/* long product names get an ellipsis; full name on hover */}
+                      <span title={r.name} className="min-w-0 max-w-full truncate text-[13px] font-medium text-gray-700">
+                        {r.name}
+                      </span>
                       <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tagStyle(r.typeLabel).pill}`}>{r.typeLabel}</span>
                       {rowDiscountAmount && rowDiscountAmount(r) > 0 && (
                         <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                          Discount -{currency(rowDiscountAmount(r))}
+                          {/* the discount type the row actually uses, not a generic "Discount" */}
+                          {r.discType === 'Custom Discount' && r.discMode === 'Percentage'
+                            ? `Custom ${Number(r.discAmt) || 0}%`
+                            : r.discType || 'Flat'}{' '}
+                          -{currency(rowDiscountAmount(r))}
                         </span>
                       )}
-                      {r.kind === 'service' && (
-                        <span className="text-[11px] text-gray-400">
-                          <span className={r.stylist ? 'text-gray-500' : 'italic'}>{r.stylist || 'No stylist'}</span> · {r.date} · {r.time}
+                      {r.kind === 'service' ? (
+                        <span className="text-[11px] font-medium text-gray-600">
+                          <span className={r.stylist ? 'text-gray-500' : 'italic'}>{r.stylist || 'No stylist'}</span>
+                        </span>
+                      ) : (
+                        // products are sold by someone rather than performed by a stylist
+                        <span className="text-[11px] font-medium text-gray-600">
+                          <span className={r.saleBy ? 'text-gray-500' : 'italic'}>{r.saleBy || 'No sale by'}</span>
                         </span>
                       )}
                     </span>
@@ -870,16 +879,14 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                           </div>
                         )}
 
-                        {/* Sale By */}
+                        {/* Sale By — searchable, blank until someone is picked */}
                         <div className="w-24 shrink-0">
-                          <select
-                            className="w-full h-[26px] rounded-full border border-gray-200 px-2 text-[11px] bg-white text-gray-700 outline-none"
-                            value={row.saleBy || ''}
-                            onChange={(e) => onRow(row.uid, { saleBy: e.target.value })}
-                          >
-                            <option value="">Abhay</option>
-                            {stylists.map(s => <option key={s.id}>{s.name}</option>)}
-                          </select>
+                          <StylistSelect
+                            value={row.saleBy}
+                            onChange={(v) => onRow(row.uid, { saleBy: v })}
+                            placeholder="Sale By"
+                            className="!rounded-full !h-[26px] !py-0 !text-[11px]"
+                          />
                         </div>
 
                         {/* Price */}
@@ -1141,7 +1148,6 @@ function CheckoutPanel({
   override, overrideDiscount = 0, onOverride, onClearOverride,
   onPaidChange, payReset,
   pendingBills = [], onPendingBills,
-  saleBy, setSaleBy,
   remarks, setRemarks,
   onSaveDraft, onPrintAndSave,
   disabled
@@ -1158,28 +1164,35 @@ function CheckoutPanel({
   return (
     <div className="rounded-xl border border-gray-300 bg-white p-3">
       <div className="space-y-3 text-sm">
-        <div className="text-sm font-bold text-gray-800">Billing Summary</div>
-        <div className="flex flex-wrap items-start gap-x-6 gap-y-4 border-b border-gray-300 pb-4 text-sm">
-          <Stat label="Total Price" value={money(subtotal)} />
-
-          <Stat label="Total Discount" value={`- ${money(totalSaved)}`} tone="text-emerald-600">
-            <div className="mt-1.5 flex items-center gap-2">
+        {/* Heading row carries the two bill-level actions */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm font-bold text-gray-800">Billing Summary</div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onOverride}
+              className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+            >
+              Override Discount
+            </button>
+            {override && (
               <button
-                onClick={onOverride}
+                onClick={onClearOverride}
                 className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
               >
-                Override Discount
+                Undo Discount
               </button>
-              {override && (
-                <button
-                  onClick={onClearOverride}
-                  className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
-                >
-                  Undo Discount
-                </button>
-              )}
-            </div>
-          </Stat>
+            )}
+            <button
+              onClick={onPendingBills}
+              className="flex items-center gap-1.5 rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+            >
+              Pending Bills 📋
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-4 border-b border-gray-300 pb-4 text-sm">
+          <Stat label="Total Price" value={money(subtotal)} />
+          <Stat label="Total Discount" value={`- ${money(totalSaved)}`} tone="text-emerald-600" />
 
           <Stat label="Amt. After Disc." value={money(afterDiscount)} />
           <Stat label="Total Tax" value={money(tax)} hint="CGST+SGST" />
@@ -1191,14 +1204,7 @@ function CheckoutPanel({
             tone={pending > 0 ? 'text-rose-500' : 'text-gray-800'}
             labelTone="text-rose-500"
             hint={pendingBills.length ? `${pendingBills.length} bill${pendingBills.length === 1 ? '' : 's'}` : undefined}
-          >
-            <button
-              onClick={onPendingBills}
-              className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
-            >
-              Pending Bills 📋
-            </button>
-          </Stat>
+          />
 
           <Stat label="Round Off" value={`${roundOff < 0 ? '- ' : ''}${money(Math.abs(roundOff))}`} />
 
@@ -1207,17 +1213,8 @@ function CheckoutPanel({
             <div className="text-2xl font-bold text-indigo-500">{money(netTotal)}</div>
           </div>
         </div>
-        <div className="mt-3 space-y-2">
+        <div className="mt-3">
           <PaymentMethods key={payReset} netTotal={netTotal} onPaidChange={onPaidChange} />
-          <select
-            value={saleBy}
-            onChange={(e) => setSaleBy(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 py-1.5 px-3 text-sm text-gray-500 outline-none focus:border-indigo-400"
-          >
-            <option value="">Sale By (optional)</option>
-            {stylists.map(s => <option key={s.id}>{s.name}</option>)}
-          </select>
-
         </div>
       </div>
     </div>
