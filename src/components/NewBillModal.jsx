@@ -125,6 +125,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [pendingBills, setPendingBills] = useState(PENDING_BILLS) // old unpaid bills settled with this one
   const [pendingBillsOpen, setPendingBillsOpen] = useState(false)
   const [batchesSelected, setBatchesSelected] = useState(false)
+  const [paymentAttempted, setPaymentAttempted] = useState(false)
   const navigate = useNavigate()
 
   const activeGuest = guests.find((g) => g.id === active)
@@ -302,6 +303,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     setSplitRows([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
     setRemarks('')
     setOffersApplied(false)
+    setPaymentAttempted(false)
   }
   const handleBookAndPay = () => {
     onClose?.()
@@ -331,6 +333,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 
   const handlePaymentClick = (action) => {
     if (hasMissingStylist) {
+      setPaymentAttempted(true)
       alert("please select stylist in all billing items")
       return
     }
@@ -480,6 +483,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               onLoadAppt={() => setLoadApptOpen(true)}
               total={guestTotal(activeGuest)}
               rowDiscountAmount={rowDiscountAmount}
+              paymentAttempted={paymentAttempted}
             />
           )}
         </div>
@@ -811,7 +815,7 @@ function AllSummary({ guests, guestName, collapsed, onOpen, onViewOffers, rowDis
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, onLoadAppt, total, rowDiscountAmount, open }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, onLoadAppt, total, rowDiscountAmount, open, paymentAttempted }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -967,7 +971,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                               value={row.stylist}
                               onChange={(v) => onRow(row.uid, { stylist: v })}
                               placeholder="Select Stylist"
-                              className={`!rounded-full !h-[26px] !py-0 !text-[11px] ${!row.stylist && (tag.toLowerCase().includes('service') || tag.toLowerCase() === 'service') ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                              className={`!rounded-full !h-[26px] !py-0 !text-[11px] ${paymentAttempted && !row.stylist && (tag.toLowerCase().includes('service') || tag.toLowerCase() === 'service') ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                             />
                           </div>
                         )}
