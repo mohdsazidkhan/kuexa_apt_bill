@@ -626,8 +626,8 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 // ---- All tab: summary of every guest ----
 function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount }) {
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-      {guests.map((g, idx) => (
+    <div className={`grid grid-cols-1 gap-3 ${guests?.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+      {guests?.map((g, idx) => (
         <div key={g.id} className="rounded-xl border border-gray-300 bg-white p-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1165,34 +1165,28 @@ function CheckoutPanel({
     <div className="rounded-xl border border-gray-300 bg-white p-3">
       <div className="space-y-3 text-sm">
         {/* Heading row carries the two bill-level actions */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm font-bold text-gray-800">Billing Summary</div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onOverride}
-              className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
-            >
-              Override Discount
-            </button>
-            {override && (
-              <button
-                onClick={onClearOverride}
-                className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
-              >
-                Undo Discount
-              </button>
-            )}
-            <button
-              onClick={onPendingBills}
-              className="flex items-center gap-1.5 rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
-            >
-              Pending Bills 📋
-            </button>
-          </div>
-        </div>
+        <div className="text-sm font-bold text-gray-800">Billing Summary</div>
         <div className="flex flex-wrap items-start gap-x-6 gap-y-4 border-b border-gray-300 pb-4 text-sm">
           <Stat label="Total Price" value={money(subtotal)} />
-          <Stat label="Total Discount" value={`- ${money(totalSaved)}`} tone="text-emerald-600" />
+
+          <Stat label="Total Discount" value={`- ${money(totalSaved)}`} tone="text-emerald-600">
+            <div className="mt-1.5 flex items-center gap-2">
+              <button
+                onClick={onOverride}
+                className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+              >
+                Override Discount
+              </button>
+              {override && (
+                <button
+                  onClick={onClearOverride}
+                  className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+                >
+                  Undo Discount
+                </button>
+              )}
+            </div>
+          </Stat>
 
           <Stat label="Amt. After Disc." value={money(afterDiscount)} />
           <Stat label="Total Tax" value={money(tax)} hint="CGST+SGST" />
@@ -1204,7 +1198,14 @@ function CheckoutPanel({
             tone={pending > 0 ? 'text-rose-500' : 'text-gray-800'}
             labelTone="text-rose-500"
             hint={pendingBills.length ? `${pendingBills.length} bill${pendingBills.length === 1 ? '' : 's'}` : undefined}
-          />
+          >
+            <button
+              onClick={onPendingBills}
+              className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+            >
+              Pending Bills 📋
+            </button>
+          </Stat>
 
           <Stat label="Round Off" value={`${roundOff < 0 ? '- ' : ''}${money(Math.abs(roundOff))}`} />
 

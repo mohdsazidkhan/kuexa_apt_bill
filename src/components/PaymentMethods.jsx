@@ -39,11 +39,23 @@ const tipPill =
 // Column templates shared by each header and its rows.
 const BENEFIT_TYPES = ['loyalty', 'gift', 'advance']
 const BENEFIT_GRID = 'grid grid-cols-[minmax(0,1fr)_96px_24px]'
-const GRID = 'grid grid-cols-[minmax(0,1fr)_96px_130px_84px_24px]'
+const GRID = 'grid grid-cols-[minmax(0,1fr)_96px_130px_84px_46px]'
 
 const IconBarcode = (props) => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" {...props}>
     <path d="M2 4h2v16H2zM6 4h1v16H6zM9 4h2v16H9zM13 4h1v16h-1zM16 4h2v16h-2zM20 4h2v16h-2z" />
+  </svg>
+)
+
+const IconPlus = (props) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+)
+
+const IconMinus = (props) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" {...props}>
+    <path d="M5 12h14" />
   </svg>
 )
 
@@ -84,8 +96,10 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
     setChecked((c) => { const n = new Set(c); n.delete(id); return n })
   }
 
-  // How many rows of this type already exist — extra ones get a remove button.
+  // How many rows of this type already exist — extra ones get a remove button,
+  // and the last row of a type carries the "add one more" plus.
   const isExtra = (row, idx) => rows.findIndex((r) => r.type === row.type) !== idx
+  const isLastOfType = (row, idx) => rows.map((r) => r.type).lastIndexOf(row.type) === idx
 
   const subLabel = (type) => {
     if (type === 'loyalty') return `${LOYALTY_PTS.toLocaleString('en-IN')} pts (${currency(LOYALTY_VALUE)})`
@@ -166,14 +180,24 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
             <span />
           ))}
 
-          <div className="flex items-center justify-end gap-1.5 text-sm text-gray-600">
+          {/* trailing cell: + adds one more row of this type, × drops an extra one */}
+          <div className="flex items-center justify-end gap-1 text-sm text-gray-600">
             {isExtra(row, idx) && (
               <button
                 onClick={() => removeRow(row.id)}
-                className="rounded p-0.5 text-gray-400 hover:text-rose-500"
-                title="Remove row"
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-gray-400 hover:border-rose-300 hover:text-rose-500"
+                title={`Remove this ${meta.label} row`}
               >
-                ×
+                <IconMinus />
+              </button>
+            )}
+            {ADDABLE.includes(row.type) && isLastOfType(row, idx) && (
+              <button
+                onClick={() => addRow(row.type)}
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:border-[#4a7196] hover:bg-[#eef3f8] hover:text-[#2c4c6b]"
+                title={`Add another ${meta.label}`}
+              >
+                <IconPlus />
               </button>
             )}
           </div>
@@ -205,21 +229,6 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
         </div>
       </div>
 
-      {/* Add another row of the same type */}
-      <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-        {ADDABLE.map((t) => (
-          <button
-            key={`add-${t}`}
-            onClick={() => addRow(t)}
-            className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-gray-600 shadow-sm hover:bg-gray-50"
-          >
-            <span className="flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[11px] leading-none text-gray-500">
-              +
-            </span>
-            {TYPES[t].label}
-          </button>
-        ))}
-      </div>
 
       <div className="flex items-center justify-between px-2.5 pt-2 text-[13px]">
         <span className="text-gray-600">Paid <span className="font-semibold text-gray-800">{currency(paid)}</span> of {currency(netTotal)}</span>
