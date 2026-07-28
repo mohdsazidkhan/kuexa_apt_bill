@@ -768,6 +768,12 @@ function AllSummary({ guests, guestName, collapsed, onOpen, onViewOffers, rowDis
                           <span className={r.saleBy ? 'text-gray-500' : 'italic'}>{r.saleBy || 'No sale by'}</span>
                         </span>
                       )}
+                      {/* Qty badge — only for products */}
+                      {(r.typeLabel || '').toLowerCase().includes('product') && (r.qty || 1) > 0 && (
+                        <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                          Qty: {r.qty || 1}
+                        </span>
+                      )}
                     </span>
                     <span className="shrink-0 font-medium text-indigo-600">{currency(r.price)}</span>
                   </div>
