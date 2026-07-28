@@ -78,7 +78,10 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
       patch(row.id, { amount: '' })
     } else {
       next.add(row.id)
-      if (!row.amount && remaining > 0) patch(row.id, { amount: remaining })
+      if (!row.amount && remaining > 0) {
+        const cap = maxBenefit(row.type)
+        patch(row.id, { amount: Math.min(remaining, cap) })
+      }
     }
     setChecked(next)
   }
@@ -109,6 +112,14 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
   }
 
   const inlineNo = (type) => (type === 'gift' ? GIFT_CARD_NO : type === 'advance' ? ADVANCE_BILL_NO : null)
+
+  // Maximum redeemable amount per benefit type
+  const maxBenefit = (type) => {
+    if (type === 'loyalty') return LOYALTY_VALUE
+    if (type === 'gift') return GIFT_CARD_BAL
+    if (type === 'advance') return ADVANCE_BAL
+    return Infinity
+  }
 
   // Benefits (loyalty / gift card / advance) on the left, everything you actually
   // collect money with — cash, card, UPI, cheque and their extra rows — on the right.
@@ -147,7 +158,14 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
             <input
               type="number"
               value={row.amount}
-              onChange={(e) => patch(row.id, { amount: e.target.value })}
+              onChange={(e) => {
+                let val = e.target.value
+                if (BENEFIT_TYPES.includes(row.type)) {
+                  const max = maxBenefit(row.type)
+                  if (Number(val) > max) val = max
+                }
+                patch(row.id, { amount: val })
+              }}
               onFocus={() => setChecked((c) => (c.has(row.id) ? c : new Set(c).add(row.id)))}
               placeholder="0.00"
               className={amountPill}
