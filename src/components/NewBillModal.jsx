@@ -650,7 +650,7 @@ function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount
               {g.customer && (
                 <button
                   onClick={() => onViewOffers?.(g.customer)}
-                  className="ml-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-600 hover:bg-indigo-100"
+                  className="ml-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-100"
                 >
                   View offers
                 </button>
