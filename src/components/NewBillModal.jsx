@@ -25,6 +25,29 @@ const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
 const money = (n) =>
   '₹' + round2(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
+// Line-level discount of a row — driven entirely by its own Disc. Type / value
+// (Custom Discount ₹ or %, Prive Member, 10%, 20%). No item carries a default discount.
+const rowAmount = (r) => (Number(r.price) || 0) * (r.qty || 1)
+const lineDiscount = (r) => {
+  const amount = rowAmount(r)
+  const type = r.discType || 'Flat'
+  const value = Number(r.discAmt) || 0
+  let disc = 0
+  if (type === 'Custom Discount') disc = r.discMode === 'Percentage' ? (amount * value) / 100 : value
+  else if (type === 'Prive Member') disc = amount * 0.2
+  else if (type.endsWith('%')) disc = (amount * (parseFloat(type) || 0)) / 100
+  else disc = value // Flat
+  return round2(Math.min(amount, Math.max(0, disc)))
+}
+
+// Services and products carry 18% GST; everything else is untaxed.
+const taxRateOf = (r) => {
+  const t = `${r.typeLabel || ''} ${r.kind || ''}`.toLowerCase()
+  return t.includes('service') || t.includes('product') ? 0.18 : 0
+}
+const rowInclTax = (r) => round2(Math.max(0, rowAmount(r) - lineDiscount(r)) * (1 + taxRateOf(r)))
+const guestInclTax = (g) => round2(g.rows.reduce((s, r) => s + rowInclTax(r), 0))
+
 // Rounded stat chip in the drawer header (Total Bill / LPE / CBE / Balance To Pay).
 const Chip = ({ className = '', children }) => (
   <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${className}`}>{children}</span>
@@ -206,9 +229,8 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     })
 
   // --- totals ---
-  // A bill-level override wipes every line-level (package) discount.
-  const rowDiscountAmount = (r) =>
-    override ? 0 : Math.min((Number(r.price) || 0) * (r.qty || 1), ((r.kind === 'service' || r.kind === 'product') ? 440 : 0))
+  // A bill-level override wipes every line-level discount.
+  const rowDiscountAmount = (r) => (override ? 0 : lineDiscount(r))
   const rowTotal = (r) => Math.max(0, (Number(r.price) || 0) * (r.qty || 1) - rowDiscountAmount(r))
   const guestTotal = (g) => g.rows.reduce((s, r) => s + rowTotal(r), 0)
   const grandTotal = guests.reduce((s, g) => s + guestTotal(g), 0)
@@ -456,7 +478,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
               <div className="hidden sm:block flex-shrink-0">
                 <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">{guestName(activeGuest)} Total</div>
                 <div className="text-2xl font-bold text-indigo-600">
-                  {currency(guestTotal(activeGuest))}
+                  {money(guestInclTax(activeGuest))}
                 </div>
               </div>
 
@@ -812,16 +834,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     // Custom Discount lets the user type the value and pick Flat (₹) or Percentage.
                     const isCustomDisc = discType === 'Custom Discount'
                     const discMode = row.discMode || 'Flat'
-                    let discAmt = Number(row.discAmt) || 0
-                    if (isCustomDisc) {
-                      discAmt = discMode === 'Percentage' ? amount * (discAmt / 100) : discAmt
-                    } else if (discType === 'Prive Member' || discType === '20%') {
-                      discAmt = amount * 0.20
-                    } else if (discType.endsWith('%')) {
-                      const pct = parseFloat(discType) || 0
-                      discAmt = amount * (pct / 100)
-                    }
-                    discAmt = round2(Math.min(amount, Math.max(0, discAmt)))
+                    const discAmt = lineDiscount(row) // same rule the bill totals use
                     const amtAfterDisc = Math.max(0, amount - discAmt)
 
                     const getTaxRate = (label) => {
