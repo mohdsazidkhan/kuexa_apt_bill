@@ -8,12 +8,27 @@ import ClientDetailsDrawer from './ClientDetailsDrawer'
 import AddFnFDrawer from './AddFnFDrawer'
 import ViewOffersDrawer from './ViewOffersDrawer'
 import ProductBatchesModal from './ProductBatchesModal'
+import OverrideDiscountModal from './OverrideDiscountModal'
+import PaymentMethods from './PaymentMethods'
+import ConfirmDialog from './ConfirmDialog'
+import PendingBillsModal, { billPending, PENDING_BILLS } from './PendingBillsModal'
 import { currency, stylists } from '../data/services'
 import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
   FUTURE_DATES, TIME_SLOTS, DEFAULT_TIME, tagStyle, kindMeta, itemToRow, GenderBadge, serviceGender,
 } from './apptFields'
 import { IconClose, IconUsers, IconGrid, IconPlus, IconHome, IconMenu } from './Icons'
+
+// Billing summary money: always 2 decimals, and every step rounded so 6720 * 0.18
+// can't leak 1209.6000000000001 into the next line.
+const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
+const money = (n) =>
+  '₹' + round2(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+// Rounded stat chip in the drawer header (Total Bill / LPE / CBE / Balance To Pay).
+const Chip = ({ className = '', children }) => (
+  <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${className}`}>{children}</span>
+)
 
 let guestCounter = 0
 const newGuest = () => ({
@@ -58,17 +73,19 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const [clientView, setClientView] = useState(null) // customer being viewed in ClientDetailsDrawer
   const [offersView, setOffersView] = useState(null)
   const [pendingSplit, setPendingSplit] = useState(null) // Rule 3 confirm: { gender, items, existingId, existingName }
-  const [manualDiscount, setManualDiscount] = useState('')
-  const [tip, setTip] = useState('')
-  const [paymentMode, setPaymentMode] = useState('Cash')
-  const [splitPayment, setSplitPayment] = useState(false)
-  const [splitRows, setSplitRows] = useState([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
+  const [override, setOverride] = useState(null) // bill-level discount override { type, value, couponName, remarks }
+  const [overrideOpen, setOverrideOpen] = useState(false)
   const [saleBy, setSaleBy] = useState('')
   const [remarks, setRemarks] = useState('')
   const [addFnFOpen, setAddFnFOpen] = useState(false)
   const [offersApplied, setOffersApplied] = useState(false)
   const [batchProduct, setBatchProduct] = useState(null)
   const [pendingPaymentAction, setPendingPaymentAction] = useState(null)
+  const [paidAmount, setPaidAmount] = useState(0) // sum of the checked payment-method rows
+  const [payConfirm, setPayConfirm] = useState(null) // 'advance' | 'pending'
+  const [payReset, setPayReset] = useState(0) // bumped on Clear all to wipe the payment rows
+  const [pendingBills, setPendingBills] = useState(PENDING_BILLS) // old unpaid bills settled with this one
+  const [pendingBillsOpen, setPendingBillsOpen] = useState(false)
   const [batchesSelected, setBatchesSelected] = useState(false)
   const navigate = useNavigate()
 
@@ -189,13 +206,18 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     })
 
   // --- totals ---
-  const rowDiscountAmount = (r) => Math.min((Number(r.price) || 0) * (r.qty || 1), ((r.kind === 'service' || r.kind === 'product') ? 440 : 0))
+  // A bill-level override wipes every line-level (package) discount.
+  const rowDiscountAmount = (r) =>
+    override ? 0 : Math.min((Number(r.price) || 0) * (r.qty || 1), ((r.kind === 'service' || r.kind === 'product') ? 440 : 0))
   const rowTotal = (r) => Math.max(0, (Number(r.price) || 0) * (r.qty || 1) - rowDiscountAmount(r))
   const guestTotal = (g) => g.rows.reduce((s, r) => s + rowTotal(r), 0)
   const grandTotal = guests.reduce((s, g) => s + guestTotal(g), 0)
   const grossTotal = guests.reduce((s, g) => s + g.rows.reduce((ss, r) => ss + ((Number(r.price) || 0) * (r.qty || 1)), 0), 0)
   const totalPackageDiscount = guests.reduce((s, g) => s + g.rows.reduce((ss, r) => ss + rowDiscountAmount(r), 0), 0)
   const totalItems = guests.reduce((s, g) => s + g.rows.length, 0)
+  const overrideDiscount = !override
+    ? 0
+    : Math.min(grossTotal, override.type === 'percentage' ? (grossTotal * (Number(override.value) || 0)) / 100 : Number(override.value) || 0)
 
   const guestName = (g) => g.customer?.name || g.label
 
@@ -209,8 +231,10 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     setBrowseFor(null)
     setRestrictedTab(null)
     setTakePayment(false)
-    setManualDiscount('')
-    setTip('')
+    setOverride(null)
+    setPaidAmount(0)
+    setPayReset((n) => n + 1)
+    setPendingBills([])
     setPaymentMode('Cash')
     setSplitPayment(false)
     setSplitRows([{ id: Date.now(), mode: 'Cash', amount: '', ref: '' }])
@@ -225,9 +249,19 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 
   const showAll = active === 'all' || !activeGuest
 
-  const currentNetTotal = Math.round(Math.max(0, grandTotal - (Number(manualDiscount) || 0)) * 1.18 + (Number(tip) || 0));
-  const totalSplit = splitRows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-  const isBalanced = totalSplit === currentNetTotal;
+  // Same staged rounding as CheckoutPanel so footer / confirms never disagree with the summary.
+  const currentAfterDisc = round2(Math.max(0, grandTotal - (override ? overrideDiscount : 0)))
+  const pendingBillsTotal = round2(pendingBills.reduce((s, b) => s + billPending(b), 0))
+  const currentNetTotal = Math.round(
+    round2(round2(currentAfterDisc + round2(currentAfterDisc * 0.18)) + pendingBillsTotal)
+  )
+  // Header chips — ₹0 until the bill has items, then they mirror the summary's Grand Total
+  // (pending bills included). LPE / CBE are flat demo values.
+  const hasItems = totalItems > 0
+  const chipTotal = hasItems ? currentNetTotal : 0
+  const loyaltyPts = hasItems ? 50 : 0
+  const cashbackEarned = hasItems ? 100 : 0
+  const balanceToPay = round2(Math.max(0, chipTotal - paidAmount))
 
   const hasService = guests.some(g => g.rows.some(r => r.kind === 'service' || r.type === 'Service' || r.typeLabel === 'Service'))
   const hasProduct = guests.some(g => g.rows.some(r => r.kind === 'product' || r.type === 'Product' || r.typeLabel === 'Product'))
@@ -238,12 +272,12 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
       const prodItem = guests.flatMap(g => g.rows).find(it => (it.kind === 'product' || it.type === 'Product' || it.typeLabel === 'Product' || (it.name && it.name.includes('Treatment'))))
       setBatchProduct(prodItem || { name: 'Dummy Product' })
       setPendingPaymentAction(action)
+    } else if (paidAmount > currentNetTotal) {
+      setPayConfirm('advance')
+    } else if (paidAmount < currentNetTotal) {
+      setPayConfirm('pending')
     } else {
-      if (action === 'split') {
-        setSplitPayment(!splitPayment)
-      } else {
-        handleBook()
-      }
+      handleBook()
     }
   }
 
@@ -261,12 +295,24 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'}`}
       >
         {/* Header with client tabs */}
-        <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-2">
+        <div className="flex items-center gap-2.5 border-b border-gray-400 px-4 py-2">
           <button onClick={onClose} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
             <IconClose width={18} height={18} />
           </button>
           <IconUsers width={18} height={18} className="text-indigo-600" />
           <h2 className="shrink-0 text-base font-semibold text-gray-800">New Bill</h2>
+
+          {/* Live bill chips: grand total, loyalty / cashback earned, and what's left to pay */}
+          <div className="hidden shrink-0 items-center gap-2 xl:flex">
+            <Chip className="bg-slate-100 text-[#1e3a56]">Total Bill: {money(chipTotal)}</Chip>
+            <Chip className="bg-emerald-50 text-emerald-600">
+              LPE: {money(loyaltyPts)} ({loyaltyPts} Pts.)
+            </Chip>
+            <Chip className="bg-emerald-50 text-emerald-600">CBE: {money(cashbackEarned)}</Chip>
+            <Chip className={balanceToPay > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}>
+              Balance To Pay: {money(balanceToPay)}
+            </Chip>
+          </div>
 
 
 
@@ -308,18 +354,19 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-4">
           {showAll ? (
-            <div className="space-y-4">
-              <AllSummary guests={guests} guestName={guestName} guestTotal={guestTotal} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
+            <div className="space-y-3">
+              <AllSummary guests={guests} guestName={guestName} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
 
               <CheckoutPanel
                 subtotal={grossTotal}
                 packageDiscount={totalPackageDiscount}
-                manualDiscount={manualDiscount} setManualDiscount={setManualDiscount}
-                tip={tip} setTip={setTip}
-                paymentMode={paymentMode} setPaymentMode={setPaymentMode}
-                splitPayment={splitPayment} setSplitPayment={setSplitPayment}
-                splitRows={splitRows} setSplitRows={setSplitRows}
-                netTotal={currentNetTotal}
+                override={override} overrideDiscount={overrideDiscount}
+                onOverride={() => setOverrideOpen(true)}
+                onClearOverride={() => setOverride(null)}
+                onPaidChange={setPaidAmount}
+                payReset={payReset}
+                pendingBills={pendingBills}
+                onPendingBills={() => setPendingBillsOpen(true)}
                 saleBy={saleBy} setSaleBy={setSaleBy}
                 remarks={remarks} setRemarks={setRemarks}
                 onSaveDraft={onClose}
@@ -480,13 +527,37 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
           console.log('Quantities submitted', qtys)
           setBatchProduct(null)
           setBatchesSelected(true)
-          if (pendingPaymentAction === 'split') {
-            setSplitPayment(!splitPayment)
-          } else if (pendingPaymentAction === 'pay') {
-            // User requested that the New Bill drawer stays open after batch selection.
-            // When they click Payment again, it will bypass this modal (since batchesSelected is true) and call handleBook().
-          }
+          // User requested that the New Bill drawer stays open after batch selection.
+          // Clicking Payment / Split & Payment again bypasses this modal (batchesSelected) and books.
         }}
+      />
+      {/* Old unpaid bills — picked ones are added on top of Sub Total */}
+      <PendingBillsModal
+        open={pendingBillsOpen}
+        selectedIds={pendingBills.map((b) => b.id)}
+        customerName={guests[0]?.customer?.name || 'Client'}
+        onClose={() => setPendingBillsOpen(false)}
+        onSubmit={setPendingBills}
+      />
+
+      {/* Paid amount doesn't match the bill — advance or pending */}
+      <ConfirmDialog
+        open={!!payConfirm}
+        message={
+          payConfirm === 'advance'
+            ? 'Entered Amount is MORE Than Total Bill Amount Proceed with Taking ADVANCE Payment!'
+            : 'Entered Amount is LESS Than Total Bill Amount Proceed with Payment and BILL status = Pending'
+        }
+        onNo={() => setPayConfirm(null)}
+        onYes={() => { setPayConfirm(null); handleBook() }}
+      />
+
+      {/* Bill-level discount override (All tab) */}
+      <OverrideDiscountModal
+        open={overrideOpen}
+        current={override}
+        onClose={() => setOverrideOpen(false)}
+        onApply={setOverride}
       />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
@@ -534,11 +605,11 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
 }
 
 // ---- All tab: summary of every guest ----
-function AllSummary({ guests, guestName, guestTotal, onOpen, onViewOffers, rowDiscountAmount }) {
+function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount }) {
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {guests.map((g, idx) => (
-        <div key={g.id} className="rounded-xl border border-gray-200 bg-white p-4">
+        <div key={g.id} className="rounded-xl border border-gray-300 bg-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white">{idx + 1}</span>
@@ -603,9 +674,21 @@ function AllSummary({ guests, guestName, guestTotal, onOpen, onViewOffers, rowDi
                   </div>
                 )
               })}
-              <div className="flex justify-end border-t border-gray-100 pt-1 text-sm font-semibold text-gray-700">
-                Subtotal: {currency(guestTotal(g))}
-              </div>
+              {(() => {
+                const gross = round2(g.rows.reduce((s, r) => s + (Number(r.price) || 0) * (r.qty || 1), 0))
+                const disc = round2(g.rows.reduce((s, r) => s + (rowDiscountAmount ? rowDiscountAmount(r) : 0), 0))
+                const after = round2(Math.max(0, gross - disc))
+                const tax = round2(after * 0.18)
+                return (
+                  <div className="flex flex-nowrap items-center justify-between gap-3 overflow-x-auto whitespace-nowrap border-t border-gray-100 pt-1.5 text-[11px] text-gray-500">
+                    <span>Total Price: <b className="text-gray-700">{money(gross)}</b></span>
+                    <span>Total Disc.: <b className="text-emerald-600">{money(disc)}</b></span>
+                    <span>After Disc.: <b className="text-gray-700">{money(after)}</b></span>
+                    <span>Total Tax: <b className="text-gray-700">{money(tax)}</b></span>
+                    <span>Total Amount: <b className="text-indigo-600">{money(after + tax)}</b></span>
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>
@@ -691,7 +774,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
       </section>
 
       {/* Items */}
-      <section className="rounded-xl border border-gray-200 bg-white p-4">
+      <section className="rounded-xl border border-gray-300 bg-white p-4">
         {guest.rows.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
             No items yet — use <span className="font-medium text-gray-500">Use Bellow Buttons</span> to add services, products or offers.
@@ -996,244 +1079,93 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
 }
 
 
+// One cell of the horizontal billing summary — label on top, value (or control) below.
+function Stat({ label, value, hint, tone = 'text-gray-800', labelTone = 'text-gray-500', children }) {
+  return (
+    <div>
+      <div className={`flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide ${labelTone}`}>
+        {label}
+        {hint && <span className="rounded bg-emerald-50 px-1 text-[9px] font-bold text-emerald-600">{hint}</span>}
+      </div>
+      {value !== undefined && <div className={`mt-0.5 text-base font-semibold ${tone}`}>{value}</div>}
+      {children}
+    </div>
+  )
+}
+
 function CheckoutPanel({
   subtotal, packageDiscount,
-  manualDiscount, setManualDiscount,
-  tip, setTip,
-  paymentMode, setPaymentMode,
-  splitPayment, setSplitPayment,
-  splitRows, setSplitRows,
-  netTotal: passedNetTotal,
+  override, overrideDiscount = 0, onOverride, onClearOverride,
+  onPaidChange, payReset,
+  pendingBills = [], onPendingBills,
   saleBy, setSaleBy,
   remarks, setRemarks,
   onSaveDraft, onPrintAndSave,
   disabled
 }) {
-  const md = Number(manualDiscount) || 0;
-  const t = Number(tip) || 0;
-
-  const totalSaved = packageDiscount + md;
-  const afterDiscount = Math.max(0, subtotal - totalSaved);
-  const tax = afterDiscount * 0.18; // 18% tax
-  const roundOff = Math.round(afterDiscount + tax + t) - (afterDiscount + tax + t);
-  const netTotal = Math.round(afterDiscount + tax + t);
-
-  const modes = [
-    { id: 'Cash', label: 'Cash', icon: '💵' },
-    { id: 'Card', label: 'Card', icon: '💳' },
-    { id: 'UPI', label: 'UPI', icon: '📱' },
-    { id: 'Gift Card', label: 'Gift Card', icon: '🎁' },
-    { id: 'Net Banking', label: 'Net Banking', icon: '🏦' }
-  ];
+  const totalSaved = round2(Math.min(subtotal, packageDiscount + (override ? overrideDiscount : 0)));
+  const afterDiscount = round2(Math.max(0, subtotal - totalSaved));
+  const tax = round2(afterDiscount * 0.18); // 18% tax (CGST + SGST)
+  const subTotal = round2(afterDiscount + tax);
+  const pending = round2(pendingBills.reduce((s, b) => s + billPending(b), 0)); // picked old bills
+  const payable = round2(subTotal + pending);
+  const netTotal = Math.round(payable); // grand total, rounded to the nearest rupee
+  const roundOff = round2(netTotal - payable);
 
   return (
-    <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-gray-300 bg-white p-3">
       <div className="space-y-3 text-sm">
-        <div className="flex justify-between items-center text-gray-600">
-          <span>Subtotal</span>
-          <span className="font-semibold text-gray-800">{currency(subtotal)}</span>
-        </div>
+        <div className="text-sm font-bold text-gray-800">Billing Summary</div>
+        <div className="flex flex-wrap items-start gap-x-6 gap-y-4 border-b border-gray-300 pb-4 text-sm">
+          <Stat label="Total Price" value={money(subtotal)} />
 
-        {packageDiscount > 0 && (
-          <div className="flex justify-between items-center text-emerald-600">
-            <span className="flex items-center gap-1">📦 Package Discount</span>
-            <span className="font-medium">- {currency(packageDiscount)}</span>
-          </div>
-        )}
-
-        <div className="flex justify-between items-center bg-green-100/50 rounded border border-green-50/20 py-1 px-2">
-          <div className="flex items-center gap-3 text-gray-600">
-            <span>Manual Discount</span>
-            <div className="relative">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
-              <input
-                type="number"
-                value={manualDiscount}
-                onChange={(e) => setManualDiscount(e.target.value)}
-                className="w-20 rounded border border-gray-200 py-1 pl-6 pr-2 text-sm outline-none focus:border-indigo-400 bg-white"
-              />
+          <Stat label="Total Discount" value={`- ${money(totalSaved)}`} tone="text-emerald-600">
+            <div className="mt-1.5 flex items-center gap-2">
+              <button
+                onClick={onOverride}
+                className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+              >
+                Override Discount
+              </button>
+              {override && (
+                <button
+                  onClick={onClearOverride}
+                  className="rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+                >
+                  Undo Discount
+                </button>
+              )}
             </div>
-          </div>
-          {totalSaved > 0 && (
-            <div className="flex items-center gap-2 text-emerald-600 text-sm px-2 py-1 rounded bg-emerald-50">
-              <span className="italic">Total Saved</span>
-              <span className="font-bold">- {currency(totalSaved)}</span>
-            </div>
-          )}
-        </div>
+          </Stat>
 
-        {totalSaved > 0 && (
-          <div className="flex justify-between items-center text-gray-800 font-medium pt-1 pb-1">
-            <span>After Disc.</span>
-            <span>{currency(afterDiscount)}</span>
-          </div>
-        )}
+          <Stat label="Amt. After Disc." value={money(afterDiscount)} />
+          <Stat label="Total Tax" value={money(tax)} hint="CGST+SGST" />
+          <Stat label="Sub Total" value={money(subTotal)} />
 
-        <div className="flex justify-between items-center text-gray-600">
-          <span className="flex items-center gap-1">
-            Tax (18%) <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">CGST+SGST</span>
-          </span>
-          <span className="font-semibold text-gray-800">{currency(tax)}</span>
-        </div>
+          <Stat
+            label="Pending Amount"
+            value={money(pending)}
+            tone={pending > 0 ? 'text-rose-500' : 'text-gray-800'}
+            labelTone="text-rose-500"
+            hint={pendingBills.length ? `${pendingBills.length} bill${pendingBills.length === 1 ? '' : 's'}` : undefined}
+          >
+            <button
+              onClick={onPendingBills}
+              className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-[#1e3a56] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#16293d]"
+            >
+              Pending Bills 📋
+            </button>
+          </Stat>
 
-        <div className="flex justify-between items-center text-gray-600">
-          <span>Round Off</span>
-          <span className="font-semibold text-gray-800">{currency(roundOff)}</span>
-        </div>
+          <Stat label="Round Off" value={`${roundOff < 0 ? '- ' : ''}${money(Math.abs(roundOff))}`} />
 
-        <div className="flex justify-between items-center text-gray-600">
-          <span className="flex items-center gap-1 text-emerald-600">💵 Tip</span>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
-            <input
-              type="number"
-              value={tip}
-              onChange={(e) => setTip(e.target.value)}
-              className="w-20 rounded border border-gray-200 py-1 pl-6 pr-2 text-sm outline-none focus:border-indigo-400"
-            />
+          <div className="ml-auto text-right">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Grand Total</div>
+            <div className="text-2xl font-bold text-indigo-500">{money(netTotal)}</div>
           </div>
         </div>
-
-        <div className="border-t border-gray-100"></div>
-
-        <div className="flex justify-between items-end">
-          <div className="text-sm font-bold text-gray-800 uppercase tracking-wider">Net Total</div>
-          <div className="text-2xl font-bold text-indigo-500">{currency(netTotal)}</div>
-        </div>
-
         <div className="mt-3 space-y-2">
-          <label className="flex items-center gap-2 cursor-pointer w-fit">
-            <input
-              type="checkbox"
-              checked={splitPayment}
-              onChange={(e) => {
-                setSplitPayment(e.target.checked);
-                if (e.target.checked) {
-                  setSplitRows([{ id: Date.now(), mode: 'Cash', amount: passedNetTotal || '', ref: '' }]);
-                }
-              }}
-              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-            />
-            <span className="text-sm text-gray-700 font-medium">Split Payment</span>
-          </label>
-
-          {splitPayment ? (
-            <div className="space-y-2">
-              {splitRows.map((row, idx) => (
-                <div key={row.id} className="flex items-center gap-2">
-                  <select
-                    value={row.mode}
-                    onChange={(e) => {
-                      const newRows = [...splitRows];
-                      newRows[idx].mode = e.target.value;
-                      setSplitRows(newRows);
-                    }}
-                    className="w-32 rounded-lg border border-gray-200 py-1.5 px-2 text-sm text-gray-700 outline-none focus:border-indigo-400"
-                  >
-                    {modes.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-                  </select>
-
-                  <div className="relative flex-1">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
-                    <input
-                      type="number"
-                      value={row.amount}
-                      onChange={(e) => {
-                        const newRows = [...splitRows];
-                        newRows[idx].amount = e.target.value;
-                        setSplitRows(newRows);
-                      }}
-                      className="w-full rounded-lg border border-gray-200 py-1.5 pl-6 pr-2 text-sm outline-none focus:border-indigo-400"
-                      placeholder="0.00"
-                    />
-                  </div>
-
-                  {(row.mode === 'Card' || row.mode === 'UPI' || row.mode === 'Net Banking') && (
-                    <input
-                      type="text"
-                      value={row.ref}
-                      onChange={(e) => {
-                        const newRows = [...splitRows];
-                        newRows[idx].ref = e.target.value;
-                        setSplitRows(newRows);
-                      }}
-                      className="w-24 rounded-lg border border-gray-200 py-1.5 px-2 text-sm outline-none focus:border-indigo-400"
-                      placeholder="Ref"
-                    />
-                  )}
-
-                  {row.mode === 'Gift Card' && (
-                    <div className="flex gap-1">
-                      <input
-                        type="text"
-                        value={row.ref}
-                        onChange={(e) => {
-                          const newRows = [...splitRows];
-                          newRows[idx].ref = e.target.value;
-                          setSplitRows(newRows);
-                        }}
-                        className="w-24 rounded-lg border border-gray-200 py-1.5 px-2 text-sm outline-none focus:border-indigo-400"
-                        placeholder="Card no."
-                      />
-                      <button className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-600">Check</button>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      if (splitRows.length > 1) {
-                        setSplitRows(splitRows.filter((_, i) => i !== idx));
-                      }
-                    }}
-                    className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  onClick={() => {
-                    const currentSplitTotal = splitRows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-                    const remainder = passedNetTotal - currentSplitTotal;
-                    setSplitRows([...splitRows, { id: Date.now(), mode: 'Cash', amount: remainder > 0 ? remainder : '', ref: '' }]);
-                  }}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                >
-                  + Add payment row
-                </button>
-
-                {(() => {
-                  const totalSplit = splitRows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-                  const diff = passedNetTotal - totalSplit;
-                  const isBalanced = diff === 0;
-                  return (
-                    <span className={`text-sm font-bold ${isBalanced ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {isBalanced ? 'Balanced' : (diff > 0 ? `Remaining: ${currency(diff)}` : `Advance: ${currency(Math.abs(diff))}`)}
-                    </span>
-                  );
-                })()}
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {modes.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setPaymentMode(m.id)}
-                  className={`flex-1 min-w-fit flex flex-row items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-[10px] sm:text-[11px] whitespace-nowrap transition-colors ${paymentMode === m.id
-                    ? 'border-emerald-500 bg-emerald-50/20 text-emerald-600 font-bold'
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium'
-                    }`}
-                >
-                  <span className="text-sm">{m.icon}</span>
-                  <span>{m.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
+          <PaymentMethods key={payReset} netTotal={netTotal} onPaidChange={onPaidChange} />
           <select
             value={saleBy}
             onChange={(e) => setSaleBy(e.target.value)}

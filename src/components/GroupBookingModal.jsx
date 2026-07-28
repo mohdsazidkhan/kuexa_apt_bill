@@ -207,7 +207,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
         className={`fixed right-0 top-0 z-40 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'}`}
       >
         {/* Header with client tabs */}
-        <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-2">
+        <div className="flex items-center gap-2.5 border-b border-gray-400 px-4 py-2">
           <button onClick={onClose} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
             <IconClose width={18} height={18} />
           </button>

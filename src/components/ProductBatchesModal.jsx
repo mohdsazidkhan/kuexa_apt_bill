@@ -34,7 +34,7 @@ export default function ProductBatchesModal({ open, onClose, onSubmit, product }
           open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-2">
+        <div className="flex items-center gap-2.5 border-b border-gray-400 px-4 py-2">
           <button onClick={onClose} className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
             <IconClose width={18} height={18} />
           </button>
