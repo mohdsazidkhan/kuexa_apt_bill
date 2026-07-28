@@ -1031,7 +1031,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Disc Type */}
-                        <div className="w-36 shrink-0">
+                        <div className="w-28 shrink-0">
                           <MultiSearchSelect
                             options={[
                               'Flat',
