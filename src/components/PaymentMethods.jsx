@@ -227,7 +227,7 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
     <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2 bg-gray-100 p-2">
         {/* Benefits & Balances — soft purple tint */}
-        <div className="bg-violet-50 rounded-lg p-3">
+        <div className="bg-violet-50 rounded-lg p-3 border border-gray-400">
           <div className={`${BENEFIT_GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-500`}>
             <span>Benefits &amp; Balances</span>
             <span className="text-center">Amount</span>
@@ -237,7 +237,7 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange }) {
         </div>
 
         {/* Payment Mode — soft sky tint */}
-        <div className="bg-sky-50 rounded-lg p-3">
+        <div className="bg-sky-50 rounded-lg p-3 border border-gray-400">
           <div className={`${GRID} items-end gap-2 px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-sky-500`}>
             <span>Payment Mode</span>
             <span className="text-center">Amount</span>
