@@ -112,9 +112,12 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                     <span className="text-2xl">📝</span>
                     <span className="text-[11px] font-bold text-yellow-600 uppercase tracking-wide">Drafts</span>
                   </div>
-                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-200 scrollbar-track-transparent">
                     <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002369</a>
                     <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002370</a>
+                    <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002371</a>
+                    <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002372</a>
+                    <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002373</a>
                   </div>
                 </div>
                 {/* Appointments */}
@@ -123,9 +126,12 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                     <span className="text-2xl">📅</span>
                     <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appts</span>
                   </div>
-                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent">
                     <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002369</a>
                     <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002370</a>
+                    <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002371</a>
+                    <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002372</a>
+                    <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002373</a>
                   </div>
                 </div>
                 {/* Bills */}
@@ -134,9 +140,12 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                     <span className="text-2xl">🧾</span>
                     <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide">Bills</span>
                   </div>
-                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-transparent">
                     <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000783/2025-26</a>
                     <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000784/2025-26</a>
+                    <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000785/2025-26</a>
+                    <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000786/2025-26</a>
+                    <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000787/2025-26</a>
                   </div>
                 </div>
               </div>
