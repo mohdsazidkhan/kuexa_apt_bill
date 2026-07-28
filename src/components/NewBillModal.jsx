@@ -1137,14 +1137,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     const price = Number(row.price) || 0;
                     const qty = row.qty || 1;
                     const amount = price * qty;
-                    const discType = row.discType || 'Flat';
-                    let discAmt = Number(row.discAmt) || 0;
-                    if (discType === 'Prive Member' || discType === '20%') {
-                      discAmt = amount * 0.20;
-                    } else if (discType.endsWith('%')) {
-                      const pct = parseFloat(discType) || 0;
-                      discAmt = amount * (pct / 100);
-                    }
+                    const discAmt = lineDiscount(row);
                     const amtAfterDisc = Math.max(0, amount - discAmt);
 
                     const getTaxRate = (label) => {
