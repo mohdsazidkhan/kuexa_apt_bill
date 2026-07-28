@@ -352,7 +352,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-4">
+        <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-2">
           {showAll ? (
             <div className="space-y-3">
               <AllSummary guests={guests} guestName={guestName} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
@@ -609,7 +609,7 @@ function AllSummary({ guests, guestName, onOpen, onViewOffers, rowDiscountAmount
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {guests.map((g, idx) => (
-        <div key={g.id} className="rounded-xl border border-gray-300 bg-white p-4">
+        <div key={g.id} className="rounded-xl border border-gray-300 bg-white p-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white">{idx + 1}</span>
@@ -719,7 +719,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
   const typeBreakdown = TYPE_ORDER.filter((t) => typeCounts[t]).map((t) => `${ABBR[t]}-${typeCounts[t]}`)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Customer row — same layout as the single New Appointment drawer */}
       <section className="rounded-xl border border-sky-200 bg-sky-100/60 p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-6">
@@ -774,29 +774,29 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
       </section>
 
       {/* Items */}
-      <section className="rounded-xl border border-gray-300 bg-white p-4">
+      <section className="rounded-xl border border-gray-300 bg-white p-2 pt-0">
         {guest.rows.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed border-gray-200 py-6 text-center text-sm text-gray-400">
             No items yet — use <span className="font-medium text-gray-500">Use Bellow Buttons</span> to add services, products or offers.
           </div>
         ) : (
           <>
-            <div className="pb-4">
-              <div className="flex items-center gap-2.5 px-2 pb-2 text-[11px] font-bold text-black min-w-[950px]">
+            <div className="w-max min-w-full pb-4">
+              <div className="flex items-center gap-2.5 px-2 pb-2 text-[11px] font-bold text-black">
                 <div className="w-48 shrink-0">Service / Item</div>
                 <div className="w-32 shrink-0 text-center">Stylist</div>
                 <div className="w-24 shrink-0 text-center">Sale By</div>
                 <div className="w-16 shrink-0 text-center">Price</div>
-                <div className="w-20 shrink-0 text-center">Qty.</div>
+                <div className="w-14 shrink-0 text-center">Qty.</div>
                 <div className="w-16 shrink-0 text-center">Amount</div>
                 <div className="w-28 shrink-0 text-center">Disc. Type</div>
-                <div className="w-16 shrink-0 text-center">Disc. Amt.</div>
+                <div className="w-28 shrink-0 text-center">Disc. Amt.</div>
                 <div className="w-20 shrink-0 text-center">Amt. After Disc.</div>
                 <div className="w-16 shrink-0 text-center">Tax Amt.</div>
                 <div className="w-24 shrink-0 text-center">Amt. Incl. Tax</div>
                 <div className="w-12 shrink-0"></div>
               </div>
-              <div className="space-y-2 min-w-[950px]">
+              <div className="space-y-2">
                 {(() => {
                   const counters = {}
                   return guest.rows.map((row, idx) => {
@@ -809,13 +809,19 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     const qty = row.qty || 1
                     const amount = price * qty
                     const discType = row.discType || 'Flat'
+                    // Custom Discount lets the user type the value and pick Flat (₹) or Percentage.
+                    const isCustomDisc = discType === 'Custom Discount'
+                    const discMode = row.discMode || 'Flat'
                     let discAmt = Number(row.discAmt) || 0
-                    if (discType === 'Prive Member' || discType === '20%') {
+                    if (isCustomDisc) {
+                      discAmt = discMode === 'Percentage' ? amount * (discAmt / 100) : discAmt
+                    } else if (discType === 'Prive Member' || discType === '20%') {
                       discAmt = amount * 0.20
                     } else if (discType.endsWith('%')) {
                       const pct = parseFloat(discType) || 0
                       discAmt = amount * (pct / 100)
                     }
+                    discAmt = round2(Math.min(amount, Math.max(0, discAmt)))
                     const amtAfterDisc = Math.max(0, amount - discAmt)
 
                     const getTaxRate = (label) => {
@@ -828,7 +834,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     const amtInclTax = amtAfterDisc + taxAmt
 
                     return (
-                      <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border p-1 shadow-sm ${meta.card}`}>
+                      <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border py-1 pl-1 pr-3 shadow-sm ${meta.card}`}>
                         {/* Item */}
                         <div className={`${row.kind === 'service' ? 'w-48' : 'w-[20.625rem]'} shrink-0 flex items-center gap-2 pl-1`}>
                           <span title={`${meta.label} ${rowNum}`} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${meta.dot}`}>
@@ -890,12 +896,12 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Qty */}
-                        <div className="w-20 shrink-0 flex items-center justify-center">
+                        <div className="w-14 shrink-0 flex items-center justify-center">
                           {tag.toLowerCase().includes('product') ? (
-                            <div className="flex shrink-0 items-center rounded-full bg-white px-1.5 py-0.5 border border-gray-200">
-                              <button onClick={() => onRow(row.uid, { qty: Math.max(1, qty - 1) })} className="px-1 text-gray-500 font-bold">−</button>
-                              <span className="w-5 text-center text-[11px] font-bold text-black">{qty}</span>
-                              <button onClick={() => onRow(row.uid, { qty: qty + 1 })} className="px-1 text-gray-500 font-bold">+</button>
+                            <div className="flex shrink-0 items-center rounded-full bg-white px-1 py-0.5 border border-gray-200">
+                              <button onClick={() => onRow(row.uid, { qty: Math.max(1, qty - 1) })} className="px-0.5 text-gray-500 font-bold">−</button>
+                              <span className="w-4 text-center text-[11px] font-bold text-black">{qty}</span>
+                              <button onClick={() => onRow(row.uid, { qty: qty + 1 })} className="px-0.5 text-gray-500 font-bold">+</button>
                             </div>
                           ) : (
                             <span className="text-center text-[11px] font-bold text-black">{qty}</span>
@@ -915,16 +921,40 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                             onChange={(e) => onRow(row.uid, { discType: e.target.value })}
                           >
                             <option value="Flat">Flat</option>
-                            <option value="Custom Discount">Custom Discount</option>
+                            {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && (
+                              <option value="Custom Discount">Custom Discount</option>
+                            )}
                             <option value="Prive Member">Prive Member</option>
                             <option value="10%">10%</option>
                             <option value="20%">20%</option>
                           </select>
                         </div>
 
-                        {/* Disc Amt */}
-                        <div className="w-16 shrink-0 text-center text-xs text-black">
-                          {currency(discAmt)}
+                        {/* Disc Amt — editable (value + Flat/Percentage) on a custom discount */}
+                        <div className="w-28 shrink-0 text-center text-xs text-black">
+                          {isCustomDisc && (tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.discAmt ?? ''}
+                                onChange={(e) => onRow(row.uid, { discAmt: e.target.value })}
+                                placeholder="0"
+                                className="w-14 shrink-0 rounded-full border border-gray-200 bg-white px-2 py-1 text-center text-[11px] outline-none focus:border-indigo-400 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              />
+                              <select
+                                value={discMode}
+                                onChange={(e) => onRow(row.uid, { discMode: e.target.value })}
+                                title={discMode}
+                                className="w-11 shrink-0 rounded-full border border-gray-200 bg-white px-1 py-1 text-[11px] text-gray-700 outline-none focus:border-indigo-400"
+                              >
+                                <option value="Flat">₹</option>
+                                <option value="Percentage">%</option>
+                              </select>
+                            </div>
+                          ) : (
+                            currency(discAmt)
+                          )}
                         </div>
 
                         {/* Amt After Disc */}
@@ -967,7 +997,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
               </div>
 
               {/* Totals Footer */}
-              <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-gray-100 p-2 text-sm font-semibold text-gray-700 min-w-[950px]">
+              <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-gray-100 py-2 pl-2 pr-3 text-sm font-semibold text-gray-700">
                 <div className="w-[27.25rem] shrink-0 flex items-center gap-x-2 truncate whitespace-nowrap px-1">
                   <span>Total {guest.rows.length}</span>
                   {typeBreakdown.length > 0 && (
@@ -1020,12 +1050,12 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                       <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
                         {currency(totalPrice)}
                       </div>
-                      <div className="w-20 shrink-0"></div>
+                      <div className="w-14 shrink-0"></div>
                       <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
                         {currency(totalAmount)}
                       </div>
                       <div className="w-28 shrink-0"></div>
-                      <div className="w-16 shrink-0 text-center text-emerald-600 font-bold">
+                      <div className="w-28 shrink-0 text-center text-emerald-600 font-bold">
                         {totalDiscAmt > 0 ? currency(totalDiscAmt) : '0'}
                       </div>
                       <div className="w-20 shrink-0 text-center text-gray-700 font-bold">
