@@ -15,7 +15,7 @@ import PendingBillsModal, { billPending, PENDING_BILLS } from './PendingBillsMod
 import LoadAppointmentModal, { IconCalendar } from './LoadAppointmentModal'
 import { currency, stylists, customers } from '../data/services'
 import {
-  cInput, Field, StylistSelect, AssistantSelect, SearchSelect,
+  cInput, Field, StylistSelect, AssistantSelect, SearchSelect, MultiSearchSelect,
   FUTURE_DATES, TIME_SLOTS, DEFAULT_TIME, tagStyle, kindMeta, itemToRow, GenderBadge, serviceGender,
 } from './apptFields'
 import { IconClose, IconUsers, IconGrid, IconPlus, IconHome, IconMenu } from './Icons'
@@ -31,13 +31,16 @@ const money = (n) =>
 const rowAmount = (r) => (Number(r.price) || 0) * (r.qty || 1)
 const lineDiscount = (r) => {
   const amount = rowAmount(r)
-  const type = r.discType || 'Flat'
+  const types = Array.isArray(r.discType) ? r.discType : [r.discType || 'Flat']
   const value = Number(r.discAmt) || 0
   let disc = 0
-  if (type === 'Custom Discount') disc = r.discMode === 'Percentage' ? (amount * value) / 100 : value
-  else if (type === 'Prive Member') disc = amount * 0.2
-  else if (type.endsWith('%')) disc = (amount * (parseFloat(type) || 0)) / 100
-  else disc = value // Flat
+  types.forEach(type => {
+    if (type === 'Custom Discount') disc += r.discMode === 'Percentage' ? (amount * value) / 100 : value
+    else if (type === 'Prive Member') disc += amount * 0.2
+    else if (type.endsWith('%')) disc += (amount * (parseFloat(type) || 0)) / 100
+    // Additional zero-value dummy discounts like Price Package and Gold Member can be handled here if they had amounts
+  })
+  if (types.includes('Flat') && !types.includes('Custom Discount')) disc += value
   return round2(Math.min(amount, Math.max(0, disc)))
 }
 
@@ -761,9 +764,9 @@ function AllSummary({ guests, guestName, collapsed, onOpen, onViewOffers, rowDis
                       {rowDiscountAmount && rowDiscountAmount(r) > 0 && (
                         <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
                           {/* the discount type the row actually uses, not a generic "Discount" */}
-                          {r.discType === 'Custom Discount' && r.discMode === 'Percentage'
-                            ? `Custom ${Number(r.discAmt) || 0}%`
-                            : r.discType || 'Flat'}{' '}
+                          {(Array.isArray(r.discType) && r.discType.includes('Custom Discount')) && r.discMode === 'Percentage'
+                            ? `Discount (${r.discAmt}%)`
+                            : (Array.isArray(r.discType) ? r.discType.join(', ') : r.discType) || 'Discount'}{' '}
                           -{currency(rowDiscountAmount(r))}
                         </span>
                       )}
@@ -933,8 +936,9 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     const qty = row.qty || 1
                     const amount = price * qty
                     const discType = row.discType || 'Flat'
+                    const discTypes = Array.isArray(discType) ? discType : [discType || 'Flat']
                     // Custom Discount lets the user type the value and pick Flat (₹) or Percentage.
-                    const isCustomDisc = discType === 'Custom Discount'
+                    const isCustomDisc = discTypes.includes('Custom Discount')
                     const discMode = row.discMode || 'Flat'
                     const discAmt = lineDiscount(row) // same rule the bill totals use
                     const amtAfterDisc = Math.max(0, amount - discAmt)
@@ -987,7 +991,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                           {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && row.isEditing ? (
                             <input
                               type="number"
-                              className="w-full rounded bg-white px-1 py-0.5 text-center text-xs font-semibold text-gray-700 outline-none border border-gray-200 focus:border-indigo-400"
+                              className="w-full rounded bg-white px-1 py-0.5 text-center text-xs font-semibold text-gray-700 outline-none border border-gray-200 focus:border-indigo-400 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                               value={row.price}
                               onChange={(e) => onRow(row.uid, { price: e.target.value })}
                               onBlur={(e) => {
@@ -1027,20 +1031,22 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Disc Type */}
-                        <div className="w-28 shrink-0">
-                          <select
-                            className="w-full rounded-full border border-gray-200 px-2 py-1 text-[11px] bg-white text-gray-700 outline-none"
-                            value={discType}
-                            onChange={(e) => onRow(row.uid, { discType: e.target.value })}
-                          >
-                            <option value="Flat">Flat</option>
-                            {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && (
-                              <option value="Custom Discount">Custom Discount</option>
-                            )}
-                            <option value="Prive Member">Prive Member</option>
-                            <option value="10%">10%</option>
-                            <option value="20%">20%</option>
-                          </select>
+                        <div className="w-36 shrink-0">
+                          <MultiSearchSelect
+                            options={[
+                              'Flat',
+                              (tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) ? 'Custom Discount' : null,
+                              'Prive Member',
+                              '10%',
+                              '20%',
+                              'Price Package',
+                              'Gold Member Ⓢ'
+                            ].filter(Boolean)}
+                            value={Array.isArray(discType) ? discType : [discType || 'Flat']}
+                            onChange={(v) => onRow(row.uid, { discType: v })}
+                            placeholder="Discount"
+                            className="!rounded-full !h-[26px] !py-0 !text-[11px] w-full"
+                          />
                         </div>
 
                         {/* Disc Amt — editable (value + Flat/Percentage) on a custom discount */}

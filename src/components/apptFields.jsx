@@ -247,3 +247,55 @@ export function SearchSelect({ value, onChange, options, placeholder = 'Select..
     </div>
   )
 }
+
+// ---- Generic searchable multi-select over string options ----
+export function MultiSearchSelect({ value = [], onChange, options, placeholder = 'Select...', searchPlaceholder = 'Search...', dropWidth = 'w-48', className = '' }) {
+  const [open, setOpen] = useState(false)
+  const [openUp, setOpenUp] = useState(false)
+  const [q, setQ] = useState('')
+  const ref = useRef(null)
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+  const filtered = options.filter((o) => o.toLowerCase().includes(q.toLowerCase()))
+  const toggle = (name) => onChange(value.includes(name) ? value.filter((n) => n !== name) : [...value, name])
+  const label = value.length === 0 ? placeholder : value.length === 1 ? value[0] : `${value.length} selected`
+  
+  const handleToggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      setOpenUp(spaceBelow < 250 && spaceAbove > spaceBelow)
+    }
+    setOpen((o) => !o)
+  }
+
+  return (
+    <div className="relative w-full" ref={ref}>
+      <button type="button" onClick={handleToggle} title={value.length ? value.join(', ') : undefined} className={`${cInput} ${className} flex items-center justify-between gap-1 text-left`}>
+        <span className={`truncate ${value.length ? 'text-gray-800' : 'text-gray-600'}`}>{label}</span>
+        <IconChevron width={14} height={14} className="shrink-0 text-gray-400" />
+      </button>
+      {open && (
+        <div className={`absolute left-0 z-50 ${dropWidth} rounded-lg border border-gray-200 bg-white p-2 shadow-lg ${openUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+          <div className="relative">
+            <IconSearch width={14} height={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={searchPlaceholder} className="w-full rounded-md border border-gray-200 py-1.5 pl-7 pr-2 text-sm outline-none focus:border-indigo-400" />
+          </div>
+          <div className="mt-1 max-h-48 overflow-y-auto">
+            {filtered.map((o) => (
+              <label key={o} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50">
+                <input type="checkbox" checked={value.includes(o)} onChange={() => toggle(o)} className="h-4 w-4 accent-indigo-600" />
+                <span className="text-sm text-gray-700">{o}</span>
+              </label>
+            ))}
+            {filtered.length === 0 && <div className="px-2 py-2 text-xs text-gray-400">No match</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
