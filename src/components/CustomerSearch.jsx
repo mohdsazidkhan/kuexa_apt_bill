@@ -104,26 +104,41 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">Do you still wish to continue?</p>
               </div>
-              {/* 3 Cards */}
+              {/* 3 Columns */}
               <div className="grid grid-cols-3 gap-3 p-4">
-                {/* Draft */}
-                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-yellow-300 bg-yellow-50 p-3 hover:bg-yellow-100 transition-colors">
-                  <span className="text-2xl">📝</span>
-                  <span className="text-[11px] font-bold text-yellow-600 uppercase tracking-wide">Draft</span>
-                  <span className="text-[10px] text-yellow-500 font-medium text-center leading-tight">DRAFT/25-26/002369</span>
-                </a>
-                {/* Appointment */}
-                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 p-3 hover:bg-green-100 transition-colors">
-                  <span className="text-2xl">📅</span>
-                  <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appointment</span>
-                  <span className="text-[10px] text-green-500 font-medium text-center leading-tight">APP/25-26/002369</span>
-                </a>
-                {/* Bill */}
-                <a href="#" className="flex flex-col items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 p-3 hover:bg-blue-100 transition-colors">
-                  <span className="text-2xl">🧾</span>
-                  <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide">Bill</span>
-                  <span className="text-[10px] text-blue-500 font-medium text-center leading-tight">BILL/000783/2025-26</span>
-                </a>
+                {/* Drafts */}
+                <div className="flex flex-col gap-2 rounded-lg border border-yellow-300 bg-yellow-50 p-2">
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl">📝</span>
+                    <span className="text-[11px] font-bold text-yellow-600 uppercase tracking-wide">Drafts</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                    <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002369</a>
+                    <a href="#" className="rounded bg-yellow-100 hover:bg-yellow-200 border border-yellow-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-yellow-700 transition-colors">DRAFT/25-26/002370</a>
+                  </div>
+                </div>
+                {/* Appointments */}
+                <div className="flex flex-col gap-2 rounded-lg border border-green-300 bg-green-50 p-2">
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl">📅</span>
+                    <span className="text-[11px] font-bold text-green-600 uppercase tracking-wide">Appts</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                    <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002369</a>
+                    <a href="#" className="rounded bg-green-100 hover:bg-green-200 border border-green-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-green-700 transition-colors">APP/25-26/002370</a>
+                  </div>
+                </div>
+                {/* Bills */}
+                <div className="flex flex-col gap-2 rounded-lg border border-blue-300 bg-blue-50 p-2">
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl">🧾</span>
+                    <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide">Bills</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                    <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000783/2025-26</a>
+                    <a href="#" className="rounded bg-blue-100 hover:bg-blue-200 border border-blue-200 py-1.5 px-1.5 text-center text-[10px] font-semibold text-blue-700 transition-colors">BILL/000784/2025-26</a>
+                  </div>
+                </div>
               </div>
               {/* Actions */}
               <div className="flex justify-center gap-3 border-t border-gray-100 px-5 py-3.5">
