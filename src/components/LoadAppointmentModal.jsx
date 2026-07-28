@@ -41,9 +41,10 @@ export default function LoadAppointmentModal({ open, onClose, onLoad, initialQue
   if (!open) return null
 
   const term = q.trim().toLowerCase()
+  const EXCLUDED = ['cancelled', 'partialadvance', 'fulladvance']
   const list = appointments.filter((a) =>
-    !term ||
-    [a.id, a.customer, a.phone, statusOf(a).label].some((v) => (v || '').toLowerCase().includes(term))
+    !EXCLUDED.includes(a.column) &&
+    (!term || [a.id, a.customer, a.phone, statusOf(a).label].some((v) => (v || '').toLowerCase().includes(term)))
   )
 
   return (
