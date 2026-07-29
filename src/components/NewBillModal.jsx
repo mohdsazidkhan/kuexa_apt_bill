@@ -137,8 +137,9 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
   const removeRow = (gid, uid) =>
     setGuests((gs) => gs.map((g) => (g.id === gid ? { ...g, rows: g.rows.filter((r) => r.uid !== uid) } : g)))
   // Smart add: distribute selected services into guests by gender.
-  //  - unisex / unknown-gender guest / same-gender  -> current guest
-  //  - same service already in current (duplicate)   -> another same-gender guest (or new w/ dummy customer)
+  //  - same service already on the current guest     -> a guest that lacks it, else auto-create a guest
+  //                                                     of the SERVICE's gender; ask once 2+ such guests exist
+  //  - unisex / unknown-gender guest / same-gender   -> current guest
   //  - different gender, no such guest               -> auto-create new guest (dummy same-gender customer)
   //  - different gender, guest exists                -> ask (Rule 3 modal)
   const addRows = (curId, items) => {
@@ -150,7 +151,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     const has = (g, name) => g.rows.some((r) => r.name === name)
     const createdByGender = {} // reuse a guest created during THIS add per gender
     const makeGuest = (G) => {
-      const g = makePlaceholderGuest(G, working)
+      const g = G ? makePlaceholderGuest(G, working) : newGuest()
       working.push(g)
       return g
     }
@@ -160,28 +161,48 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     for (const it of items) {
       const sg = serviceGender(it.name)
       const row = itemToRow(it)
+
+      // Duplicate: the current guest already has this service -> it belongs to a second person.
+      if (has(cur, it.name)) {
+        const G = sg === 'U' ? curG : sg // unisex duplicate follows the current guest's gender
+        const pool = G ? working.filter((g) => preIds.has(g.id) && normGender(g.customer?.gender) === G) : []
+        const eligible = pool.filter((g) => !has(g, it.name))
+        // Two or more guests of that gender already exist -> ask which one (or a new guest).
+        if (pool.length >= 2 && eligible.length > 0) {
+          pendItems.push(it)
+          pendGender = G
+          continue
+        }
+        // Otherwise reuse a guest that fits the gender and lacks the service, else create one.
+        const free = working.find(
+          (g) => g.id !== cur.id && !has(g, it.name) && (!G || normGender(g.customer?.gender) === G)
+        )
+        ;(free || (createdByGender[G ?? 'U'] ||= makeGuest(G))).rows.push(row)
+        continue
+      }
+
       // unisex / current guest has no gender -> current guest, no questions
       if (sg === 'U' || !curG) { cur.rows.push(row); continue }
+      if (sg === curG) { cur.rows.push(row); continue } // same gender, not a duplicate
 
-      const matching = working.filter((g) => preIds.has(g.id) && normGender(g.customer?.gender) === sg)
-      const differentGender = sg !== curG
-      const dup = matching.some((g) => has(g, it.name)) || has(cur, it.name)
-
-      // Ask when a matching-gender guest already exists AND (it's a different gender OR the service is a duplicate).
-      if (matching.length > 0 && (differentGender || dup)) {
+      // Different gender: ask when a matching-gender guest that lacks this service already exists.
+      const matching = working.filter(
+        (g) => preIds.has(g.id) && normGender(g.customer?.gender) === sg && !has(g, it.name)
+      )
+      if (matching.length > 0) {
         pendItems.push(it)
         pendGender = sg
-      } else if (differentGender) {
+      } else {
         // no matching-gender guest yet -> auto-create one (reused for this add)
         ; (createdByGender[sg] ||= makeGuest(sg)).rows.push(row)
-      } else {
-        cur.rows.push(row) // same gender, not a duplicate -> current guest
       }
     }
     setGuests(working)
     if (pendItems.length && pendGender) {
+      const names = new Set(pendItems.map((i) => i.name))
       const candidates = working
         .filter((g) => preIds.has(g.id) && normGender(g.customer?.gender) === pendGender)
+        .filter((g) => !g.rows.some((r) => names.has(r.name)))
         .map((g) => ({ id: g.id, name: g.customer?.name || g.label }))
       setPendingSplit({ gender: pendGender, items: pendItems, candidates })
     }
