@@ -96,9 +96,17 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
       const row = it.stylist ? { ...itemToRow(it), stylist: it.stylist } : itemToRow(it)
 
       // Duplicate: the current guest already has this service -> it belongs to a second person.
-      // Reuse a guest that fits the service's gender and doesn't have it yet, else create one.
       if (has(cur, it.name)) {
         const G = sg === 'U' ? curG : sg // unisex duplicate follows the current guest's gender
+        const pool = G ? working.filter((g) => preIds.has(g.id) && normGender(g.customer?.gender) === G) : []
+        const eligible = pool.filter((g) => !has(g, it.name))
+        // Two or more guests of that gender already exist -> ask which one (or a new guest).
+        if (pool.length >= 2 && eligible.length > 0) {
+          pendItems.push(it)
+          pendGender = G
+          continue
+        }
+        // Otherwise reuse a guest that fits the gender and lacks the service, else create one.
         const free = working.find(
           (g) => g.id !== cur.id && !has(g, it.name) && (!G || normGender(g.customer?.gender) === G)
         )
