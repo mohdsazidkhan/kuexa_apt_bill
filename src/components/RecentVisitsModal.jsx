@@ -8,7 +8,7 @@ const statusStyle = {
   Cancelled: 'text-gray-400',
 }
 
-function VisitCard({ visit, index, total, onBookAgain }) {
+function VisitCard({ visit, index, total, onRepeatClick }) {
   const visitTotal = visit.items.reduce((s, i) => s + i.price, 0)
   return (
     <div className="rounded-lg border border-indigo-100 bg-indigo-50/40 px-3 py-2.5">
@@ -27,7 +27,7 @@ function VisitCard({ visit, index, total, onBookAgain }) {
         </div>
       </div>
 
-      {/* Service lines */}
+      {/* Service lines — each row repeats on its own */}
       <div className="mt-1.5 space-y-0.5">
         {visit.items.map((it, i) => (
           <div key={i} className="flex items-center justify-between gap-2 text-[13px]">
@@ -35,7 +35,15 @@ function VisitCard({ visit, index, total, onBookAgain }) {
               <span className="font-medium text-gray-700">{it.name}</span>
               <span className="text-gray-400"> · {it.stylist}</span>
             </span>
-            <span className="shrink-0 font-medium text-indigo-600">{currency(it.price)}</span>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="font-medium text-indigo-600">{currency(it.price)}</span>
+              <button
+                onClick={() => onRepeatClick(visit, it)}
+                className="rounded-md bg-[#4a7196] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-[#3d6083]"
+              >
+                Repeat
+              </button>
+            </span>
           </div>
         ))}
       </div>
@@ -45,24 +53,21 @@ function VisitCard({ visit, index, total, onBookAgain }) {
         <span className="text-xs text-gray-500">
           Total: <span className="font-semibold text-gray-800">{currency(visitTotal)}</span>
         </span>
-        <button 
-          onClick={() => onBookAgain(visit)}
-          className="rounded-md bg-[#4a7196] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#3d6083]"
-        >
-          Book Again
-        </button>
       </div>
     </div>
   )
 }
 
 export default function RecentVisitsModal({ open, onClose, onRepeat }) {
+  // { visit, item } — the service row whose Repeat button was clicked
   const [repeatPrompt, setRepeatPrompt] = useState(null)
   const [repeatType, setRepeatType] = useState('Appointment')
 
   const handleSubmit = () => {
     if (onRepeat && repeatPrompt) {
-      onRepeat(repeatPrompt, repeatType)
+      // Appointment -> every service of that visit; Service -> only the clicked one.
+      const items = repeatType === 'Appointment' ? repeatPrompt.visit.items : [repeatPrompt.item]
+      onRepeat(repeatPrompt.visit, repeatType, items)
     }
     setRepeatPrompt(null)
     onClose()
@@ -102,8 +107,8 @@ export default function RecentVisitsModal({ open, onClose, onRepeat }) {
               key={v.id} 
               visit={v} 
               index={i} 
-              total={recentVisits.length} 
-              onBookAgain={setRepeatPrompt} 
+              total={recentVisits.length}
+              onRepeatClick={(visit, item) => setRepeatPrompt({ visit, item })}
             />
           ))}
         </div>

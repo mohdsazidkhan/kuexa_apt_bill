@@ -91,7 +91,8 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
     let pendGender = null
     for (const it of items) {
       const sg = serviceGender(it.name)
-      const row = itemToRow(it)
+      // itemToRow() drops stylist — keep it when the caller supplied one (repeat a past visit).
+      const row = it.stylist ? { ...itemToRow(it), stylist: it.stylist } : itemToRow(it)
       // unisex / current guest has no gender -> current guest, no questions
       if (sg === 'U' || !curG) { cur.rows.push(row); continue }
 
@@ -123,7 +124,7 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
   const resolveSplit = (target) => {
     if (!pendingSplit) return
     const { items, gender } = pendingSplit
-    const rows = items.map(itemToRow)
+    const rows = items.map((it) => (it.stylist ? { ...itemToRow(it), stylist: it.stylist } : itemToRow(it)))
     setPendingSplit(null)
 
     if (target === 'new') {
@@ -346,21 +347,17 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
       <RecentVisitsModal
         open={recentOpen}
         onClose={() => setRecentOpen(false)}
-        onRepeat={(visit, repeatType) => {
-          if (activeGuest) {
-            const mappedItems = visit.items.map(it => ({
-              uid: crypto.randomUUID(),
-              kind: 'service',
-              name: it.name,
-              price: it.price,
-              duration: '30',
-              stylist: repeatType === 'Appointment' ? (it.stylist || '') : '',
-              assistants: '',
-              date: activeGuest.date,
-              time: activeGuest.time,
-            }))
-            addRows(activeGuest.id, mappedItems)
-          }
+        onRepeat={(visit, repeatType, items) => {
+          if (!activeGuest) return
+          // items = whole visit (Appointment) or just the clicked row (Service).
+          addRows(activeGuest.id, items.map((it) => ({
+            kind: 'service',
+            name: it.name,
+            price: it.price,
+            duration: 30,
+            // Keep the previous stylist when repeating the full appointment.
+            stylist: repeatType === 'Appointment' ? it.stylist || '' : '',
+          })))
         }}
       />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
