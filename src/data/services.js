@@ -189,6 +189,10 @@ export const customers = [
   { id: 'c8', name: 'Sneha Reddy', phone: '9812309876', gender: 'Female' },
   { id: 'c9', name: 'Karan Mehta', phone: '9654321870', gender: 'Male' },
   { id: 'c10', name: 'Divya Iyer', phone: '9900456781', gender: 'Female' },
+  // Clients that only appeared on Kanban appointments — listed here so "Bill Now → No"
+  // lands on a full customer record (gender badge and all), not a stand-in.
+  { id: 'c11', name: 'Seema', phone: '9845347490', gender: 'Female' },
+  { id: 'c12', name: 'Acharya Manoj Kumar', phone: '9871425920', gender: 'Male' },
 ]
 
 // Past visits for a customer — shown in the "Recent Visits" modal.

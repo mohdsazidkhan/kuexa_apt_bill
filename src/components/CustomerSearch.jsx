@@ -5,7 +5,9 @@ import AddCustomerModal from './AddCustomerModal'
 
 const isPhoneQuery = (q) => /\d/.test(q) && /^[\d+\-\s]+$/.test(q)
 
-export default function CustomerSearch({ value, onChange, autoFocus = false, focusTrigger = false }) {
+// confirmExisting=false skips the "already created today" prompt — used where picking a
+// client isn't the start of a new booking (e.g. the Payments screen).
+export default function CustomerSearch({ value, onChange, autoFocus = false, focusTrigger = false, confirmExisting = true }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -32,7 +34,7 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
   }, [query])
 
   const pick = (c) => {
-    if (c.name.toLowerCase() === 'rajat katiyar') {
+    if (confirmExisting && c.name.toLowerCase() === 'rajat katiyar') {
       setConfirmClient(c)
       return
     }
@@ -171,8 +173,8 @@ export default function CustomerSearch({ value, onChange, autoFocus = false, foc
           <span className="flex items-center gap-2 text-sm font-medium text-gray-800">
             <IconUsers width={16} height={16} className="text-gray-400" />
             {value.name}
-            {value.gender && <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">{value.gender}</span>}
-            {value.phone && <span className="text-[11px] font-semibold text-gray-600">{value.phone}</span>}
+            {value.gender && <span className="text-[12px] rounded font-semibold bg-blue-50 px-1.5 py-0.5 text-blue-600">{value.gender}</span>}
+            {value.phone && <span className="text-[12px] font-semibold text-gray-600">{value.phone}</span>}
           </span>
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-emerald-600">Selected</span>

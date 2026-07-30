@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import {
   IconDashboard, IconOperations, IconCalendar, IconUsers, IconBilling,
   IconMasters, IconHR, IconFinance, IconMarketing, IconConfig,
-  IconAnalytics, IconSettings, IconChevron,
+  IconAnalytics, IconSettings, IconChevron, IconWallet,
 } from './Icons'
 
 const groups = [
@@ -14,6 +14,7 @@ const groups = [
       { label: 'Appointments', icon: IconCalendar, to: '/appointment' },
       { label: 'Customers', icon: IconUsers, to: '/customers' },
       { label: 'Billing', icon: IconBilling, to: '/billing' },
+      { label: 'Payments', icon: IconWallet, to: '/payments' },
     ],
   },
   { label: 'Masters', icon: IconMasters, children: [] },
@@ -82,7 +83,11 @@ export default function Sidebar() {
         <span className="text-2xl font-semibold tracking-tight">Kuexa</span>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+      {/* indigo-500 rather than -600 so the thumb stays visible on the dark panel */}
+      <nav
+        style={{ '--scroll-thumb': '#6366f1' }}
+        className="thin-scroll flex-1 space-y-1 overflow-y-auto px-3 pb-4"
+      >
         {groups.map((g) => (
           <Group key={g.label} group={g} />
         ))}

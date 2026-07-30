@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ServiceModal from './ServiceModal'
 import CustomerSearch from './CustomerSearch'
@@ -99,7 +99,7 @@ const makePlaceholderGuest = (G, existing) => {
   }
 }
 
-export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
+export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, initialAppointment = null }) {
   const [guests, setGuests] = useState(() => [newGuest()])
   const [active, setActive] = useState(() => guests[0]?.id)
   const [browseFor, setBrowseFor] = useState(null) // guestId while Browse modal is open
@@ -208,30 +208,57 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft }) {
     }
   }
 
+  const apptRow = (s) => ({
+    ...itemToRow({ kind: 'service', name: s.name, category: s.category, price: s.price, duration: s.duration }),
+    stylist: s.stylist ? s.stylist.charAt(0) + s.stylist.slice(1).toLowerCase() : '',
+    date: s.date,
+    time: s.time,
+  })
+
+  const apptCustomer = (name, phone, fallbackId) => {
+    const matched = customers.find((c) => (phone && c.phone === phone) || c.name === name)
+    return { id: matched?.id ?? fallbackId, name, phone: phone || '', gender: matched?.gender ?? null }
+  }
+
   // Load an appointment into the active guest: its services become rows, and the
-  // appointment's client fills the guest if none was picked yet.
+  // appointment's client fills the guest if none was picked yet. A group booking
+  // instead lands as one guest per client, each carrying only their own services.
   const loadAppointment = (appt) => {
     if (!activeGuest) return
-    const rows = appt.services.map((s) => ({
-      ...itemToRow({ kind: 'service', name: s.name, category: s.category, price: s.price, duration: s.duration }),
-      stylist: s.stylist ? s.stylist.charAt(0) + s.stylist.slice(1).toLowerCase() : '',
-      date: s.date,
-      time: s.time,
-    }))
+
+    if (appt.group && appt.guests?.length) {
+      const built = appt.guests.map((g) => ({
+        ...newGuest(),
+        customer: apptCustomer(g.name, g.phone, `${appt.id}-${g.name}`),
+        rows: appt.services.filter((s) => s.client === g.name).map(apptRow),
+      }))
+      // Replace an untouched bill, otherwise add the party alongside what's already there.
+      const blank = guests.length === 1 && !guests[0].customer && guests[0].rows.length === 0
+      setGuests(blank ? built : [...guests, ...built])
+      setActive(built[0].id)
+      return
+    }
+
+    const rows = appt.services.map(apptRow)
     const patch = { rows: [...activeGuest.rows, ...rows] }
     if (!activeGuest.customer && appt.customer && appt.customer !== 'Group') {
-      const matched = customers.find(
-        (c) => c.phone === appt.phone || c.name === appt.customer
-      )
-      patch.customer = {
-        id: matched?.id ?? appt.id,
-        name: appt.customer,
-        phone: appt.phone,
-        gender: matched?.gender ?? null,
-      }
+      patch.customer = apptCustomer(appt.customer, appt.phone, appt.id)
     }
     patchGuest(activeGuest.id, patch)
   }
+
+  // "Bill Now" on a Kanban card opens this drawer with the appointment already chosen:
+  // its client and services land on the bill and the offers are applied for you.
+  // The ref keeps a re-open (or StrictMode's double effect) from loading it twice.
+  const loadedApptRef = useRef(null)
+  useEffect(() => {
+    if (!open || !initialAppointment) return
+    if (loadedApptRef.current === initialAppointment.id) return
+    loadedApptRef.current = initialAppointment.id
+    loadAppointment(initialAppointment)
+    setOffersApplied(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialAppointment])
 
   // Resolve the confirm: target = a guest id, or 'new'.
   const resolveSplit = (target) => {

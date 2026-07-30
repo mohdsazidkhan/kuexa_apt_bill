@@ -5,6 +5,27 @@ body {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Thin scrollbars. Callers tint the thumb with --scroll-thumb (Kanban columns use
+   their status accent; the board strip and sidebar use the active indigo). */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb, #cbd5e1) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb, #cbd5e1);
+  border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  filter: brightness(0.9);
+}
+
 /* Darker placeholder text across all inputs/textareas */
 input::placeholder,
 textarea::placeholder {

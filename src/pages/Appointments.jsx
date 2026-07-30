@@ -1,18 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 // import NewAppointmentModal from '../components/NewAppointmentModal'
 import GroupBookingModal from '../components/GroupBookingModal'
 import KanbanBoard from '../components/KanbanBoard'
 import TopBar from '../components/TopBar'
-import { appointments } from '../data/appointments'
+import { appointments, DAY_TODAY, DAY_NEXT } from '../data/appointments'
 import { currency } from '../data/services'
-import { IconPlus, IconCalendar, IconUsers, IconGrid, IconMenu, IconClock, IconRefresh, IconArrowUp, IconArrowDown } from '../components/Icons'
+import { IconPlus, IconCalendar, IconUsers, IconGrid, IconMenu, IconClock, IconRefresh, IconSearch, IconClose } from '../components/Icons'
+
+// All the chip counters read off the real data, so they can't drift from the board.
+const inColumn = (key) => appointments.filter((a) => a.column === key).length
+const onDate = (d) => appointments.filter((a) => a.date === d).length
 
 // ---- Top stat chips ----
 const statChips = [
-  { label: "Today's", value: 17, color: 'text-indigo-600 border-indigo-200' },
-  { label: 'Scheduled', value: 119, color: 'text-sky-600 border-sky-200' },
-  { label: 'In Progress', value: 10, color: 'text-amber-600 border-amber-200' },
-  { label: 'Completed', value: 15, color: 'text-emerald-600 border-emerald-200' },
+  { label: "Today's", value: onDate(DAY_TODAY), color: 'text-indigo-600 border-indigo-200' },
+  { label: 'Scheduled', value: inColumn('scheduled'), color: 'text-sky-600 border-sky-200' },
+  { label: 'In Progress', value: inColumn('inprogress'), color: 'text-amber-600 border-amber-200' },
+  { label: 'Completed', value: inColumn('completed'), color: 'text-emerald-600 border-emerald-200' },
 ]
 
 // ---- View tabs ----
@@ -26,18 +30,18 @@ const views = [
 ]
 
 const dateFilters = [
-  { label: 'Today', value: 17 },
-  { label: 'This Week', value: 43 },
-  { label: 'All Dates', value: 452 },
+  { label: 'Today', value: onDate(DAY_TODAY) },
+  { label: 'This Week', value: onDate(DAY_TODAY) + onDate(DAY_NEXT) },
+  { label: 'All Dates', value: appointments.length },
 ]
 const statusFilters = [
-  { label: 'All Status', value: 17 },
-  { label: 'Scheduled', value: 3 },
-  { label: 'Confirmed', value: 6 },
-  { label: 'In Progress', value: 2 },
-  { label: 'Completed', value: 2 },
-  { label: 'No Show', value: 1 },
-  { label: 'Cancelled', value: 0 },
+  { label: 'All Status', value: appointments.length },
+  { label: 'Scheduled', value: inColumn('scheduled') },
+  { label: 'Confirmed', value: inColumn('checkedin') },
+  { label: 'In Progress', value: inColumn('inprogress') },
+  { label: 'Completed', value: inColumn('completed') },
+  { label: 'No Show', value: inColumn('noshow') },
+  { label: 'Cancelled', value: inColumn('cancelled') },
 ]
 
 const listStatusStyle = {
@@ -55,12 +59,19 @@ export default function Appointments() {
   const [view, setView] = useState('kanban')
   const [dateFilter, setDateFilter] = useState('Today')
   const [statusFilter, setStatusFilter] = useState('All Status')
-  const topRef = useRef(null)
-  const bottomRef = useRef(null)
+  const [search, setSearch] = useState('')
 
-  const scrollToTop = () => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  const scrollToBottom = () => bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-
+  // Search across appointment no., client (including a group's guests), phone and services.
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return appointments
+    const hit = (v) => String(v ?? '').toLowerCase().includes(q)
+    return appointments.filter((a) =>
+      hit(a.id) || hit(a.customer) || hit(a.phone) ||
+      a.guests?.some((g) => hit(g.name) || hit(g.phone)) ||
+      a.services.some((s) => hit(s.name))
+    )
+  }, [search])
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(''), 3500)
@@ -85,10 +96,10 @@ export default function Appointments() {
       {/* Top navbar */}
       <TopBar title="Appointments" />
 
-      {/* Fixed top section — header, tabs, filters */}
+      {/* Fixed top section — header (title · view tabs · actions), filters */}
       <div className="shrink-0 px-4 pt-2">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Header — the view tabs sit centred between the title and the actions */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold text-gray-800">Appointments</h1>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -99,6 +110,24 @@ export default function Appointments() {
               ))}
             </div>
           </div>
+
+          <div className="flex flex-1 flex-wrap items-center justify-center gap-1">
+            {views.map((v) => {
+              const Icon = v.icon
+              const on = v.key === view
+              return (
+                <button
+                  key={v.key}
+                  onClick={() => setView(v.key)}
+                  className={`-mb-1 flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors ${on ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                  <Icon width={14} height={14} /> {v.label}
+                </button>
+              )
+            })}
+          </div>
+
           <div className="flex items-center gap-2">
             <button className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 hover:bg-gray-50"><IconRefresh width={16} height={16} /></button>
             <button
@@ -110,64 +139,45 @@ export default function Appointments() {
           </div>
         </div>
 
-        {/* View tabs */}
-        <div className="mt-1 flex flex-wrap items-center gap-1 border-b border-gray-200">
-          {views.map((v) => {
-            const Icon = v.icon
-            const on = v.key === view
-            return (
-              <button
-                key={v.key}
-                onClick={() => setView(v.key)}
-                className={`-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors ${on ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-800'
-                  }`}
-              >
-                <Icon width={14} height={14} /> {v.label}
-              </button>
-            )
-          })}
-        </div>
-
         {/* Filter row */}
         <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-100 bg-white p-2">
           {dateFilters.map((f) => (
             <Chip key={f.label} active={dateFilter === f.label} onClick={() => setDateFilter(f.label)} label={f.label} value={f.value} />
           ))}
-          <span className="mx-0.5 h-4 w-px bg-gray-200" />
+          <span className="mx-0.5 h-4 w-px bg-gray-600" />
           {statusFilters.map((f) => (
             <Chip key={f.label} active={statusFilter === f.label} onClick={() => setStatusFilter(f.label)} label={f.label} value={f.value} />
           ))}
           <select className="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 outline-none">
             <option>All stylists</option>
           </select>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-gray-400">{appointments.length} shown</span>
-            <div className="flex items-center gap-1">
+
+          <div className="relative ml-1 w-64">
+            <IconSearch width={13} height={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Appt no, client, phone or service..."
+              className="w-full rounded-lg border border-gray-200 bg-white py-1 pl-7 pr-7 text-xs text-gray-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+            {search && (
               <button
-                onClick={scrollToTop}
-                title="Scroll to top"
-                className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+                onClick={() => setSearch('')}
+                title="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-rose-500"
               >
-                <IconArrowUp width={14} height={14} />
+                <IconClose width={12} height={12} />
               </button>
-              <button
-                onClick={scrollToBottom}
-                title="Scroll to bottom"
-                className="rounded-md border border-gray-200 bg-white p-1 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
-              >
-                <IconArrowDown width={14} height={14} />
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Scrollable cards/board section */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-1">
-        <div ref={topRef} />
+      {/* Board section — no page scroll of its own; each Kanban column scrolls instead */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 pt-1">
         {/* Body */}
-        <div className="mt-1">
-          {view === 'kanban' && <KanbanBoard appointments={appointments} />}
+        <div className="mt-1 min-h-0 flex-1">
+          {view === 'kanban' && <KanbanBoard appointments={visible} />}
           {view !== 'kanban' && (
             <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white text-center">
               <span className="text-lg font-semibold text-gray-700">{views.find((v) => v.key === view)?.label} view</span>
@@ -175,7 +185,6 @@ export default function Appointments() {
             </div>
           )}
         </div>
-        <div ref={bottomRef} />
       </div>
 
       {/* <NewAppointmentModal open={open} onClose={() => setOpen(false)} onBooked={handleBooked} /> */}

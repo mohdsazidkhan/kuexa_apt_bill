@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import NewBillModal from '../components/NewBillModal'
 import {
@@ -49,13 +50,26 @@ const currency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', cu
 
 export default function Billing() {
   const [newBillOpen, setNewBillOpen] = useState(false)
+  const [billAppt, setBillAppt] = useState(null) // appointment handed over by "Bill Now"
   const [toast, setToast] = useState('')
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(''), 3500)
     return () => clearTimeout(t)
   }, [toast])
+
+  // Arriving from a Kanban card's "Bill Now" → Yes: open the drawer on that appointment.
+  // The state is cleared straight away so a reload doesn't re-open it.
+  useEffect(() => {
+    const appt = location.state?.billAppointment
+    if (!appt) return
+    setBillAppt(appt)
+    setNewBillOpen(true)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, navigate])
   const [activeTab, setActiveTab] = useState('All')
   const [summaryOpen, setSummaryOpen] = useState(false)
 
@@ -365,8 +379,9 @@ export default function Billing() {
         </div>
       </div>
 
-      <NewBillModal 
-        open={newBillOpen} 
+      <NewBillModal
+        open={newBillOpen}
+        initialAppointment={billAppt}
         onClose={() => setNewBillOpen(false)}
         onBooked={() => {
           setNewBillOpen(false);

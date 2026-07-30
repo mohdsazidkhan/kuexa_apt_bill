@@ -119,3 +119,10 @@ export const IconMail = (p) => (
 export const IconMessage = (p) => (
   <svg {...base} {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
 )
+// Box with an arrow leaving it — "opens elsewhere".
+export const IconExternal = (p) => (
+  <svg {...base} {...p}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><path d="M15 3h6v6" /><path d="M10 14 21 3" /></svg>
+)
+export const IconWallet = (p) => (
+  <svg {...base} {...p}><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2" /><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3" /><path d="M21 10h-4a2 2 0 0 0 0 4h4v-4z" /></svg>
+)

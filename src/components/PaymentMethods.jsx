@@ -59,7 +59,9 @@ const IconMinus = (props) => (
   </svg>
 )
 
-export default function PaymentMethods({ netTotal = 0, onPaidChange, hasBenefits = false }) {
+// showSummary=false drops the "Paid … of …" strip — used by Advance Payment, where
+// the customer decides the amount and there is no bill total to settle against.
+export default function PaymentMethods({ netTotal = 0, onPaidChange, hasBenefits = false, showSummary = true }) {
   const [rows, setRows] = useState(BASE_ROWS)
   const [checked, setChecked] = useState(() => new Set())
 
@@ -251,16 +253,18 @@ export default function PaymentMethods({ netTotal = 0, onPaidChange, hasBenefits
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-2 text-[13px]">
-        <span className="text-gray-600">Paid <span className="font-semibold text-gray-800">{currency(paid)}</span> of {currency(netTotal)}</span>
-        <span className={`font-bold ${paid > netTotal ? 'animate-pulse text-pink-600' : remaining === 0 && paid > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-          {paid > netTotal
-            ? `Advance: ${currency(paid - netTotal)}`
-            : remaining === 0 && paid > 0
-              ? 'Balanced'
-              : `Remaining: ${currency(remaining)}`}
-        </span>
-      </div>
+      {showSummary && (
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-2 text-[13px]">
+          <span className="text-gray-600">Paid <span className="font-semibold text-gray-800">{currency(paid)}</span> of {currency(netTotal)}</span>
+          <span className={`font-bold ${paid > netTotal ? 'animate-pulse text-pink-600' : remaining === 0 && paid > 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+            {paid > netTotal
+              ? `Advance: ${currency(paid - netTotal)}`
+              : remaining === 0 && paid > 0
+                ? 'Balanced'
+                : `Remaining: ${currency(remaining)}`}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

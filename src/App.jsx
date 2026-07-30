@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Appointments from './pages/Appointments'
 import Billing from './pages/Billing'
+import Payments from './pages/Payments'
 import Placeholder from './pages/Placeholder'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/appointment" element={<Appointments />} />
             <Route path="/customers" element={<Placeholder title="Customers" />} />
             <Route path="/billing" element={<Billing />} />
+            <Route path="/payments" element={<Payments />} />
             <Route path="/settings" element={<Placeholder title="Settings" />} />
             <Route path="*" element={<Placeholder title="Not Found" />} />
           </Routes>

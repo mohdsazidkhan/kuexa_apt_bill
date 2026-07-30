@@ -13,6 +13,9 @@ const STATUS = {
   rescheduled: { label: 'Rescheduled', cls: 'bg-fuchsia-50 text-fuchsia-600' },
   cancelled: { label: 'Cancelled', cls: 'bg-rose-50 text-rose-600' },
   noshow: { label: 'No Show', cls: 'bg-rose-50 text-rose-500' },
+  partialpaid: { label: 'Partial Paid', cls: 'bg-cyan-50 text-cyan-700' },
+  paid: { label: 'Fully Paid', cls: 'bg-teal-50 text-teal-700' },
+  refunded: { label: 'Refunded', cls: 'bg-pink-50 text-pink-700' },
 }
 const statusOf = (a) => STATUS[a.column] || { label: a.column, cls: 'bg-gray-100 text-gray-600' }
 
@@ -41,7 +44,7 @@ export default function LoadAppointmentModal({ open, onClose, onLoad, initialQue
   if (!open) return null
 
   const term = q.trim().toLowerCase()
-  const EXCLUDED = ['cancelled', 'partialadvance', 'fulladvance']
+  const EXCLUDED = ['cancelled', 'partialadvance', 'fulladvance', 'paid', 'refunded']
   const list = appointments.filter((a) =>
     !EXCLUDED.includes(a.column) &&
     (!term || [a.id, a.customer, a.phone, statusOf(a).label].some((v) => (v || '').toLowerCase().includes(term)))
