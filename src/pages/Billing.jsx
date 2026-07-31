@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import NewBillModal from '../components/NewBillModal'
 import {
-  IconSearch, IconCart, IconMenu, IconEye, IconEdit, IconTrash,
-  IconReceipt, IconMail, IconMessage, IconArrowDown, IconArrowUp, IconClock
+  IconSearch, IconCart, IconEye, IconEdit, IconTrash,
+  IconReceipt, IconMail, IconMessage, IconArrowDown, IconArrowUp, IconClock, IconChevron
 } from '../components/Icons'
 
 const mockBills = [
@@ -44,9 +44,158 @@ const mockBills = [
     netPayable: 1038.00, received: 1038, pending: 0, advance: 0, paymentMode: 'Cash', createdBy: 'Rajat Singh',
     status: 'Paid', type: 'Sale'
   },
+  {
+    id: 'BILL-20260621093015-73', customer: 'Priya Sharma', phone: '9834567812', apptId: 'APT-20260621092210114-73',
+    date: '21 Jun 2026', time: '09:30 AM', subTotal: 1340, totalAmount: 1265.20, discount: 134, tax: 59.20,
+    netPayable: 1265.00, received: 1265, pending: 0, advance: 0, paymentMode: 'UPI', createdBy: 'Rajat Singh',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260621141122-73', customer: 'Vikram Singh', phone: '9812345678', apptId: '-',
+    date: '21 Jun 2026', time: '02:11 PM', subTotal: 900, totalAmount: 855.00, discount: 90, tax: 45.00,
+    netPayable: 855.00, received: 400, pending: 455, advance: 0, paymentMode: 'Cash', createdBy: 'Hemant Arora',
+    status: 'Partial', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260622101540-73', customer: 'Meera Nair', phone: '9900112233', apptId: 'APT-20260622100012045-73',
+    date: '22 Jun 2026', time: '10:15 AM', subTotal: 8000, totalAmount: 7600.00, discount: 800, tax: 400.00,
+    netPayable: 7600.00, received: 7600, pending: 0, advance: 2000, paymentMode: 'Card', createdBy: 'Mohd Sazid Khan',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260622163050-73', customer: 'Anshu Saini', phone: '8528174444', apptId: '-',
+    date: '22 Jun 2026', time: '04:30 PM', subTotal: 2500, totalAmount: 2375.00, discount: 250, tax: 125.00,
+    netPayable: 2375.00, received: 0, pending: 2375, advance: 0, paymentMode: '-', createdBy: 'Rajat Singh',
+    status: 'Pending', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260623112233-73', customer: 'Karan Mehta', phone: '9654321870', apptId: 'APT-20260623110500332-73',
+    date: '23 Jun 2026', time: '11:22 AM', subTotal: 3000, totalAmount: 2850.00, discount: 300, tax: 150.00,
+    netPayable: 2850.00, received: 2850, pending: 0, advance: 0, paymentMode: 'UPI', createdBy: 'Hemant Arora',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260623175814-73', customer: 'Seema', phone: '9845347490', apptId: '-',
+    date: '23 Jun 2026', time: '05:58 PM', subTotal: 5000, totalAmount: 4750.00, discount: 500, tax: 250.00,
+    netPayable: 4750.00, received: 4750, pending: 0, advance: 0, paymentMode: 'Cash', createdBy: 'Rajat Singh',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260624094500-73', customer: 'Ananya Gupta', phone: '9876543210', apptId: 'APT-20260624090012045-73',
+    date: '24 Jun 2026', time: '09:45 AM', subTotal: 12555, totalAmount: 11927.25, discount: 1255.50, tax: 627.75,
+    netPayable: 11927.00, received: 6000, pending: 5927, advance: 0, paymentMode: 'Card', createdBy: 'Mohd Sazid Khan',
+    status: 'Partial', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260624131020-73', customer: 'Rajat Katiyar', phone: '7380785008', apptId: '-',
+    date: '24 Jun 2026', time: '01:10 PM', subTotal: 650, totalAmount: 617.50, discount: 65, tax: 32.50,
+    netPayable: 617.00, received: 617, pending: 0, advance: 0, paymentMode: 'UPI', createdBy: 'Rajat Singh',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260625102845-73', customer: 'Acharya Manoj Kumar', phone: '9871425920', apptId: 'APT-20260625101828678-73',
+    date: '25 Jun 2026', time: '10:28 AM', subTotal: 440, totalAmount: 418.00, discount: 44, tax: 22.00,
+    netPayable: 418.00, received: 0, pending: 418, advance: 0, paymentMode: '-', createdBy: 'Hemant Arora',
+    status: 'Pending', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260625154210-73', customer: 'A Chaudhary', phone: '8697551059', apptId: '-',
+    date: '25 Jun 2026', time: '03:42 PM', subTotal: 7340, totalAmount: 6973.00, discount: 734, tax: 367.00,
+    netPayable: 6973.00, received: 6973, pending: 0, advance: 0, paymentMode: 'Card', createdBy: 'Rajat Singh',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260626111500-73', customer: 'Imran Ansari', phone: '9700456123', apptId: 'APT-20260626110101184-73',
+    date: '26 Jun 2026', time: '11:15 AM', subTotal: 345, totalAmount: 327.75, discount: 34.50, tax: 17.25,
+    netPayable: 328.00, received: 328, pending: 0, advance: 0, paymentMode: 'Cash', createdBy: 'Hemant Arora',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260626182030-73', customer: 'Neha Rajput', phone: '9123456780', apptId: '-',
+    date: '26 Jun 2026', time: '06:20 PM', subTotal: 1500, totalAmount: 1425.00, discount: 150, tax: 75.00,
+    netPayable: 1425.00, received: 0, pending: 0, advance: 0, paymentMode: '-', createdBy: 'Rajat Singh',
+    status: 'Canceled', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260627100812-73', customer: 'Mohd Sazid', phone: '7678129912', apptId: 'APT-20260627095500119-73',
+    date: '27 Jun 2026', time: '10:08 AM', subTotal: 9500, totalAmount: 9025.00, discount: 950, tax: 475.00,
+    netPayable: 9025.00, received: 9025, pending: 0, advance: 3000, paymentMode: 'UPI', createdBy: 'Mohd Sazid Khan',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260627145533-73', customer: 'Priya Sharma', phone: '9834567812', apptId: '-',
+    date: '27 Jun 2026', time: '02:55 PM', subTotal: 2900, totalAmount: 2755.00, discount: 290, tax: 145.00,
+    netPayable: 2755.00, received: 1000, pending: 1755, advance: 0, paymentMode: 'Cash', createdBy: 'Rajat Singh',
+    status: 'Partial', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260628093344-73', customer: 'Karan Mehta', phone: '9654321870', apptId: '-',
+    date: '28 Jun 2026', time: '09:33 AM', subTotal: 500, totalAmount: 475.00, discount: 50, tax: 25.00,
+    netPayable: 475.00, received: 475, pending: 0, advance: 0, paymentMode: 'Cash', createdBy: 'Hemant Arora',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260628160718-73', customer: 'Meera Nair', phone: '9900112233', apptId: 'APT-20260628155012045-73',
+    date: '28 Jun 2026', time: '04:07 PM', subTotal: 30000, totalAmount: 28500.00, discount: 3000, tax: 1500.00,
+    netPayable: 28500.00, received: 0, pending: 28500, advance: 0, paymentMode: '-', createdBy: 'Mohd Sazid Khan',
+    status: 'Pending', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260629104925-73', customer: 'Vikram Singh', phone: '9812345678', apptId: 'APT-20260629100200114-73',
+    date: '29 Jun 2026', time: '10:49 AM', subTotal: 1200, totalAmount: 1140.00, discount: 120, tax: 60.00,
+    netPayable: 1140.00, received: 1140, pending: 0, advance: 0, paymentMode: 'UPI', createdBy: 'Rajat Singh',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260629172640-73', customer: 'Anshu Saini', phone: '8528174444', apptId: '-',
+    date: '29 Jun 2026', time: '05:26 PM', subTotal: 8765, totalAmount: 8326.75, discount: 876.50, tax: 438.25,
+    netPayable: 8327.00, received: 8327, pending: 0, advance: 0, paymentMode: 'Card', createdBy: 'Hemant Arora',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260630112055-73', customer: 'Seema', phone: '9845347490', apptId: 'APT-20260630105500288-73',
+    date: '30 Jun 2026', time: '11:20 AM', subTotal: 5555, totalAmount: 5277.25, discount: 555.50, tax: 277.75,
+    netPayable: 5277.00, received: 0, pending: 5277, advance: 1000, paymentMode: '-', createdBy: 'Rajat Singh',
+    status: 'Pending', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260630181402-73', customer: 'Rajat Katiyar', phone: '7380785008', apptId: '-',
+    date: '30 Jun 2026', time: '06:14 PM', subTotal: 2400, totalAmount: 2280.00, discount: 240, tax: 120.00,
+    netPayable: 2280.00, received: 2280, pending: 0, advance: 0, paymentMode: 'UPI', createdBy: 'Mohd Sazid Khan',
+    status: 'Paid', type: 'Sale'
+  },
+  {
+    id: 'BILL-20260701095310-73', customer: 'Ananya Gupta', phone: '9876543210', apptId: '-',
+    date: '01 Jul 2026', time: '09:53 AM', subTotal: 3400, totalAmount: 3230.00, discount: 340, tax: 170.00,
+    netPayable: 3230.00, received: 0, pending: 0, advance: 0, paymentMode: '-', createdBy: 'Hemant Arora',
+    status: 'Canceled', type: 'Sale'
+  },
 ]
 
 const currency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(val || 0)
+
+const BILLS_PER_PAGE = 10
+
+// "21 Jun 2026" -> Date, so the range picker can compare against it.
+const MONTHS = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 }
+const billDate = (s) => {
+  const [d, m, y] = String(s).split(' ')
+  return new Date(Number(y), MONTHS[m] ?? 0, Number(d))
+}
+
+// Page buttons around the current page: 1 … 4 5 6 … 12, collapsing once there are
+// more pages than fit on the bar.
+const pageNumbers = (page, total) => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const first = Math.max(2, page - 1)
+  const last = Math.min(total - 1, page + 1)
+  const out = [1]
+  if (first > 2) out.push('…')
+  for (let i = first; i <= last; i++) out.push(i)
+  if (last < total - 1) out.push('…')
+  out.push(total)
+  return out
+}
 
 export default function Billing() {
   const [newBillOpen, setNewBillOpen] = useState(false)
@@ -72,14 +221,53 @@ export default function Billing() {
   }, [location.state, location.pathname, navigate])
   const [activeTab, setActiveTab] = useState('All')
   const [summaryOpen, setSummaryOpen] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
 
-  const tabs = [
-    { label: 'All', count: 122 },
-    { label: 'Paid', count: 75 },
-    { label: 'Pending', count: 44 },
-    { label: 'Partial', count: 4 },
-    { label: 'Canceled', count: 1 },
-  ]
+  // Chrome/Edge drop the calendar on showPicker(); elsewhere the click on the field
+  // is enough on its own, so a failure here is not worth reporting.
+  const openPicker = (e) => {
+    try { e.currentTarget.showPicker?.() } catch { /* unsupported — native behaviour stands */ }
+  }
+
+  // Counted off the bills themselves, so the chips can't disagree with the table.
+  const tabs = useMemo(() => {
+    const of = (status) => mockBills.filter((b) => b.status === status).length
+    return [
+      { label: 'All', count: mockBills.length },
+      { label: 'Paid', count: of('Paid') },
+      { label: 'Pending', count: of('Pending') },
+      { label: 'Partial', count: of('Partial') },
+      { label: 'Canceled', count: of('Canceled') },
+    ]
+  }, [])
+
+  // Status tab, free-text search and the date range, applied together.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const from = startDate ? new Date(startDate) : null
+    const to = endDate ? new Date(endDate) : null
+    return mockBills.filter((b) => {
+      if (activeTab !== 'All' && b.status !== activeTab) return false
+      if (q && !`${b.id} ${b.customer} ${b.phone}`.toLowerCase().includes(q)) return false
+      if (from || to) {
+        const d = billDate(b.date)
+        if (from && d < from) return false
+        if (to && d > to) return false
+      }
+      return true
+    })
+  }, [activeTab, query, startDate, endDate])
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / BILLS_PER_PAGE))
+  const currentPage = Math.min(page, pageCount)
+  const firstOnPage = (currentPage - 1) * BILLS_PER_PAGE
+  const pageBills = filtered.slice(firstOnPage, firstOnPage + BILLS_PER_PAGE)
+
+  // Any change to what's being filtered starts again from page one.
+  useEffect(() => { setPage(1) }, [activeTab, query, startDate, endDate])
 
   return (
     <div className="-mx-6 -my-8 flex h-screen flex-col overflow-hidden bg-gray-50">
@@ -90,36 +278,35 @@ export default function Billing() {
         </div>
       } />
 
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      {/* The page itself doesn't scroll — header, summary and filters keep their
+          height and the bills table takes whatever is left. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-4">
         {/* Header */}
-        <div className="mb-4 flex items-center justify-between bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+        <div className="mb-4 flex shrink-0 items-center justify-between bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Billing</h1>
-            <p className="text-xs text-gray-400">122 bills total</p>
+            <h1 className="text-xl font-bold text-gray-800">Billing History <span className="pl-2 text-sm text-gray-400">(Total Bills {mockBills.length})</span></h1>
+            
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setNewBillOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 transition-colors"
             >
               <IconCart width={16} height={16} /> New Bill
-            </button>
-            <button className="flex items-center gap-1.5 rounded-lg bg-[#4a7196] px-4 py-2 text-sm font-semibold text-white shadow hover:bg-[#3d6083] transition-colors">
-              <IconMenu width={16} height={16} /> Bills History
             </button>
           </div>
         </div>
 
         
         {/* Billing Summary Collapsible */}
-        <div className="mb-4 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="mb-4 shrink-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <button 
             onClick={() => setSummaryOpen(!summaryOpen)} 
             className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             {summaryOpen ? <IconArrowUp width={14} height={14} /> : <IconArrowDown width={14} height={14} />}
             Billing Summary
-            <span className="ml-2 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">122 bills</span>
+            <span className="ml-2 text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{mockBills.length} bills</span>
             <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">₹-8,88,11,98,567.80</span>
           </button>
           
@@ -134,7 +321,7 @@ export default function Billing() {
                   </div>
                   <div>
                     <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Bills</div>
-                    <div className="text-xl font-bold text-indigo-600">122</div>
+                    <div className="text-xl font-bold text-indigo-600">{mockBills.length}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -262,42 +449,60 @@ export default function Billing() {
           )}
         </div>
 
-        {/* Filters */}
-        <div className="mb-4 flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[300px]">
+        {/* Filters — search and date range on the left, status tabs on the right,
+            all on one row. */}
+        <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
+          <div className="relative min-w-[200px] flex-1">
             <IconSearch width={16} height={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              placeholder="Search bill number, customer name or phone..." 
-              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm outline-none focus:border-indigo-400 shadow-sm" 
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search bill number, customer name or phone..."
+              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm outline-none focus:border-indigo-400 shadow-sm"
             />
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm">
-            <span>Start date</span>
-            <span>→</span>
-            <span>End date</span>
+          {/* Date range — clicking anywhere on a field opens the picker, not just
+              the calendar glyph. */}
+          <div className="flex w-[310px] shrink-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-500 shadow-sm focus-within:border-indigo-400">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              onClick={openPicker}
+              title="Start date"
+              className="min-w-0 flex-1 cursor-pointer bg-transparent text-sm text-gray-600 outline-none"
+            />
+            <span className="shrink-0 text-gray-400">→</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(e) => setEndDate(e.target.value)}
+              onClick={openPicker}
+              title="End date"
+              className="min-w-0 flex-1 cursor-pointer bg-transparent text-sm text-gray-600 outline-none"
+            />
           </div>
-        </div>
 
-        <div className="mb-3 flex items-center justify-between px-1">
-          <div className="flex gap-1">
+          <div className="flex shrink-0 gap-1">
             {tabs.map(t => (
-              <button 
-                key={t.label} 
+              <button
+                key={t.label}
                 onClick={() => setActiveTab(t.label)}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${activeTab === t.label ? 'bg-indigo-600 text-white' : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
               >
-                {t.label} 
+                {t.label}
                 <span className={`px-1.5 py-0.5 rounded-full text-[9px] ${activeTab === t.label ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500'}`}>{t.count}</span>
               </button>
             ))}
           </div>
-          <div className="text-[11px] font-semibold text-gray-400">122 of 122 Bills</div>
         </div>
 
-        {/* Table */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
+        {/* Table — fills the rest of the page and scrolls inside its own card, so
+            there's no dead space under a short list. */}
+        <div className="min-h-[220px] flex-1 overflow-auto rounded-xl border border-gray-200 bg-white shadow-sm">
           <table className="w-full text-left text-[11px] whitespace-nowrap">
-            <thead className="bg-gray-50/80 text-gray-500 uppercase tracking-wider border-b border-gray-200">
+            <thead className="sticky top-0 z-10 bg-gray-50 text-gray-500 uppercase tracking-wider border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 font-semibold">S.No</th>
                 <th className="px-4 py-3 font-semibold">Bill #</th>
@@ -320,9 +525,10 @@ export default function Billing() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mockBills.map((b, i) => (
+              {pageBills.map((b, i) => (
                 <tr key={b.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3.5 text-gray-500 font-medium">{i + 1}</td>
+                  {/* numbering runs across pages, not from 1 on every page */}
+                  <td className="px-4 py-3.5 text-gray-500 font-medium">{firstOnPage + i + 1}</td>
                   <td className="px-4 py-3.5">
                     <div className="text-indigo-600 font-semibold cursor-pointer hover:underline max-w-[120px] truncate" title={b.id}>
                       {b.id}
@@ -374,8 +580,59 @@ export default function Billing() {
                   </td>
                 </tr>
               ))}
+              {pageBills.length === 0 && (
+                <tr>
+                  <td colSpan={18} className="px-4 py-10 text-center text-sm text-gray-400">
+                    No bills match these filters.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination — sits under the table and stays put while the rows scroll */}
+        <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
+          <span className="text-xs font-medium text-gray-500">
+            {filtered.length === 0
+              ? 'No bills'
+              : `${firstOnPage + 1}–${firstOnPage + pageBills.length} of ${filtered.length} bills`}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              title="Previous page"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <IconChevron width={14} height={14} className="rotate-90" />
+            </button>
+            {pageNumbers(currentPage, pageCount).map((n, i) =>
+              n === '…' ? (
+                <span key={`gap-${i}`} className="px-1 text-xs text-gray-400">…</span>
+              ) : (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`h-7 min-w-7 rounded-lg px-2 text-xs font-semibold transition-colors ${
+                    n === currentPage
+                      ? 'bg-indigo-600 text-white'
+                      : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {n}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              disabled={currentPage === pageCount}
+              title="Next page"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <IconChevron width={14} height={14} className="-rotate-90" />
+            </button>
+          </div>
         </div>
       </div>
 
