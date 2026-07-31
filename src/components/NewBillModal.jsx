@@ -67,6 +67,27 @@ const Chip = ({ className = '', children }) => (
   <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${className}`}>{children}</span>
 )
 
+// One column table for the bill grid — the header, every row and the totals footer
+// all read their widths from here, so a figure always sits under its own heading.
+// Cells are gap-2.5 (0.625rem) apart; the two spans below cover the cells a row
+// skips, gaps included.
+const COL = {
+  item: 'w-48',            // 12rem
+  stylist: 'w-28',         // 7rem — services only
+  saleBy: 'w-24',          // 6rem
+  price: 'w-16',
+  qty: 'w-14',
+  amount: 'w-16',
+  discType: 'w-24',
+  discAmt: 'w-28',
+  afterDisc: 'w-20',
+  tax: 'w-16',
+  inclTax: 'w-24',
+  actions: 'w-14',
+  itemNoStylist: 'w-[19.625rem]',  // item + gap + stylist
+  totalsLabel: 'w-[26.25rem]',     // item + gap + stylist + gap + sale by
+}
+
 let guestCounter = 0
 const newGuest = () => ({
   id: `g-${guestCounter++}`,
@@ -957,19 +978,19 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
         ) : (
           <>
             <div className="w-max min-w-full pb-4">
-              <div className="flex items-center gap-2.5 px-2 pb-2 text-[11px] font-bold text-black">
-                <div className="w-48 shrink-0">Service / Item</div>
-                <div className="w-28 shrink-0 text-center">Stylist</div>
-                <div className="w-24 shrink-0 text-center">Sale By</div>
-                <div className="w-16 shrink-0 text-center">Price</div>
-                <div className="w-14 shrink-0 text-center">Qty.</div>
-                <div className="w-16 shrink-0 text-center">Amount</div>
-                <div className="w-24 shrink-0 text-center">Disc. Type</div>
-                <div className="w-28 shrink-0 text-center">Disc. Amt.</div>
-                <div className="w-20 shrink-0 text-center">Amt. After Disc.</div>
-                <div className="w-16 shrink-0 text-center">Tax Amt.</div>
-                <div className="w-24 shrink-0 text-center">Amt. Incl. Tax</div>
-                <div className="w-12 shrink-0"></div>
+              <div className="flex items-center gap-2.5 border border-transparent pb-2 pl-2 pr-3 text-left text-[11px] font-bold text-black">
+                <div className={`${COL.item} shrink-0`}>Service / Item</div>
+                <div className={`${COL.stylist} shrink-0`}>Stylist</div>
+                <div className={`${COL.saleBy} shrink-0`}>Sale By</div>
+                <div className={`${COL.price} shrink-0`}>Price</div>
+                <div className={`${COL.qty} shrink-0`}>Qty.</div>
+                <div className={`${COL.amount} shrink-0`}>Amount</div>
+                <div className={`${COL.discType} shrink-0`}>Disc. Type</div>
+                <div className={`${COL.discAmt} shrink-0`}>Disc. Amt.</div>
+                <div className={`${COL.afterDisc} shrink-0`}>Amt. After Disc.</div>
+                <div className={`${COL.tax} shrink-0`}>Tax Amt.</div>
+                <div className={`${COL.inclTax} shrink-0`}>Amt. Incl. Tax</div>
+                <div className={`${COL.actions} shrink-0`}></div>
               </div>
               <div className="space-y-2">
                 {(() => {
@@ -1001,9 +1022,9 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     const amtInclTax = amtAfterDisc + taxAmt
 
                     return (
-                      <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border py-1 pl-1 pr-3 shadow-sm ${meta.card}`}>
+                      <div key={row.uid} className={`flex items-center gap-2.5 rounded-lg border py-1 pl-2 pr-3 shadow-sm ${meta.card}`}>
                         {/* Item */}
-                        <div className={`${row.kind === 'service' ? 'w-48' : 'w-[20.625rem]'} shrink-0 flex items-center gap-2 pl-1`}>
+                        <div className={`${row.kind === 'service' ? COL.item : COL.itemNoStylist} shrink-0 flex items-center gap-2`}>
                           <span title={`${meta.label} ${rowNum}`} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${meta.dot}`}>
                             {rowNum}
                           </span>
@@ -1014,7 +1035,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
 
                         {/* Stylist */}
                         {row.kind === 'service' && (
-                          <div className="w-28 shrink-0">
+                          <div className={`${COL.stylist} shrink-0`}>
                             <StylistSelect
                               value={row.stylist}
                               onChange={(v) => onRow(row.uid, { stylist: v })}
@@ -1025,7 +1046,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         )}
 
                         {/* Sale By — searchable, blank until someone is picked */}
-                        <div className="w-24 shrink-0">
+                        <div className={`${COL.saleBy} shrink-0`}>
                           <StylistSelect
                             value={row.saleBy}
                             onChange={(v) => onRow(row.uid, { saleBy: v })}
@@ -1035,7 +1056,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Price */}
-                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                        <div className={`${COL.price} shrink-0 text-left text-xs text-black`}>
                           {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && row.isEditing ? (
                             <input
                               type="number"
@@ -1061,7 +1082,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Qty */}
-                        <div className="w-14 shrink-0 flex items-center justify-center">
+                        <div className={`${COL.qty} shrink-0 flex items-center justify-start`}>
                           {tag.toLowerCase().includes('product') ? (
                             <div className="flex shrink-0 items-center rounded-full bg-white px-1 py-0.5 border border-gray-200">
                               <button onClick={() => onRow(row.uid, { qty: Math.max(1, qty - 1) })} className="px-0.5 text-gray-500 font-bold">−</button>
@@ -1074,12 +1095,12 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Amount */}
-                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                        <div className={`${COL.amount} shrink-0 text-left text-xs text-black`}>
                           {currency(amount)}
                         </div>
 
                         {/* Disc Type */}
-                        <div className="w-24 shrink-0">
+                        <div className={`${COL.discType} shrink-0`}>
                           <MultiSearchSelect
                             options={[
                               'Flat',
@@ -1098,7 +1119,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Disc Amt — editable (value + Flat/Percentage) on a custom discount */}
-                        <div className="w-28 shrink-0 text-center text-xs text-black">
+                        <div className={`${COL.discAmt} shrink-0 text-left text-xs text-black`}>
                           {isCustomDisc && (tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) ? (
                             <div className="flex items-center gap-1">
                               <input
@@ -1125,22 +1146,22 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Amt After Disc */}
-                        <div className="w-20 shrink-0 text-center text-xs text-black">
+                        <div className={`${COL.afterDisc} shrink-0 text-left text-xs text-black`}>
                           {currency(amtAfterDisc)}
                         </div>
 
                         {/* Tax Amt */}
-                        <div className="w-16 shrink-0 text-center text-xs text-black">
+                        <div className={`${COL.tax} shrink-0 text-left text-xs text-black`}>
                           {currency(taxAmt)}
                         </div>
 
                         {/* Amt Incl Tax */}
-                        <div className="w-24 shrink-0 text-center text-xs font-bold text-black">
+                        <div className={`${COL.inclTax} shrink-0 text-left text-xs font-bold text-black`}>
                           {currency(amtInclTax)}
                         </div>
 
                         {/* Actions */}
-                        <div className="w-12 shrink-0 flex items-center justify-center gap-1">
+                        <div className={`${COL.actions} shrink-0 flex items-center justify-end gap-1`}>
                           {(tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) && (
                             <button
                               onClick={() => onRow(row.uid, { isEditing: !row.isEditing })}
@@ -1164,8 +1185,8 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
               </div>
 
               {/* Totals Footer */}
-              <div className="mt-2 flex items-center gap-2.5 rounded-lg bg-gray-100 py-2 pl-2 pr-3 text-sm font-semibold text-gray-700">
-                <div className="w-[27.25rem] shrink-0 flex items-center gap-x-2 truncate whitespace-nowrap px-1">
+              <div className="mt-2 flex items-center gap-2.5 rounded-lg border border-transparent bg-gray-100 py-2 pl-2 pr-3 text-left text-sm font-semibold text-gray-700">
+                <div className={`${COL.totalsLabel} shrink-0 flex items-center gap-x-2 truncate whitespace-nowrap`}>
                   <span>Total {guest.rows.length}</span>
                   {typeBreakdown.length > 0 && (
                     <span className="font-normal text-gray-500">({typeBreakdown.join(', ')})</span>
@@ -1207,27 +1228,27 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
 
                   return (
                     <>
-                      <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
+                      <div className={`${COL.price} shrink-0 text-gray-700 font-bold`}>
                         {currency(totalPrice)}
                       </div>
-                      <div className="w-14 shrink-0"></div>
-                      <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
+                      <div className={`${COL.qty} shrink-0`}></div>
+                      <div className={`${COL.amount} shrink-0 text-gray-700 font-bold`}>
                         {currency(totalAmount)}
                       </div>
-                      <div className="w-28 shrink-0"></div>
-                      <div className="w-28 shrink-0 text-center text-emerald-600 font-bold">
+                      <div className={`${COL.discType} shrink-0`}></div>
+                      <div className={`${COL.discAmt} shrink-0 text-emerald-600 font-bold`}>
                         {totalDiscAmt > 0 ? currency(totalDiscAmt) : '0'}
                       </div>
-                      <div className="w-20 shrink-0 text-center text-gray-700 font-bold">
+                      <div className={`${COL.afterDisc} shrink-0 text-gray-700 font-bold`}>
                         {currency(totalAmtAfterDisc)}
                       </div>
-                      <div className="w-16 shrink-0 text-center text-gray-700 font-bold">
+                      <div className={`${COL.tax} shrink-0 text-gray-700 font-bold`}>
                         {currency(totalTaxAmt)}
                       </div>
-                      <div className="w-24 shrink-0 text-center text-indigo-600 font-bold">
+                      <div className={`${COL.inclTax} shrink-0 text-indigo-600 font-bold`}>
                         {currency(totalAmtInclTax)}
                       </div>
-                      <div className="w-12 shrink-0"></div>
+                      <div className={`${COL.actions} shrink-0`}></div>
                     </>
                   );
                 })()}
