@@ -638,7 +638,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
                     onClick={() => handlePaymentClick('split')}
                     className="flex-1 rounded-lg bg-[#2c4c6b] py-2 text-sm font-bold text-white shadow hover:bg-[#1a3551] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Split & Payment
+                    Bill Split & Merge (2 Videos)
                   </button>
                 )}
                 <button
