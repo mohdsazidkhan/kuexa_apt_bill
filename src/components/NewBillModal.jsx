@@ -80,7 +80,7 @@ const COL = {
   amount: 'w-16',
   discType: 'w-24',
   discAmt: 'w-28',
-  afterDisc: 'w-20',
+  afterDisc: 'min-w-[85px] w-[85px]',  // "Amt. After Disc." needs the extra room
   tax: 'w-16',
   inclTax: 'w-24',
   actions: 'w-14',
@@ -978,14 +978,14 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
         ) : (
           <>
             <div className="w-max min-w-full pb-4">
-              <div className="flex items-center gap-2.5 border border-transparent pb-2 pl-2 pr-3 text-left text-[11px] font-bold text-black">
+              <div className="flex items-center gap-2.5 border border-transparent p-2 text-left text-[11px] font-bold text-black">
                 <div className={`${COL.item} shrink-0`}>Service / Item</div>
-                <div className={`${COL.stylist} shrink-0`}>Stylist</div>
-                <div className={`${COL.saleBy} shrink-0`}>Sale By</div>
+                <div className={`${COL.stylist} shrink-0 text-center`}>Stylist</div>
+                <div className={`${COL.saleBy} shrink-0 text-center`}>Sale By</div>
                 <div className={`${COL.price} shrink-0`}>Price</div>
-                <div className={`${COL.qty} shrink-0`}>Qty.</div>
+                <div className={`${COL.qty} shrink-0 text-center`}>Qty.</div>
                 <div className={`${COL.amount} shrink-0`}>Amount</div>
-                <div className={`${COL.discType} shrink-0`}>Disc. Type</div>
+                <div className={`${COL.discType} shrink-0 text-center`}>Disc. Type</div>
                 <div className={`${COL.discAmt} shrink-0`}>Disc. Amt.</div>
                 <div className={`${COL.afterDisc} shrink-0`}>Amt. After Disc.</div>
                 <div className={`${COL.tax} shrink-0`}>Tax Amt.</div>
@@ -1029,7 +1029,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                             {rowNum}
                           </span>
                           <span className="flex min-w-0 flex-1 items-center gap-1.5" title={row.name}>
-                            <span className="text-sm font-semibold text-gray-800">{row.name}</span>
+                            <span className="text-[12px] font-semibold text-gray-800">{row.name}</span>
                           </span>
                         </div>
 
@@ -1082,7 +1082,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         </div>
 
                         {/* Qty */}
-                        <div className={`${COL.qty} shrink-0 flex items-center justify-start`}>
+                        <div className={`${COL.qty} shrink-0 flex items-center justify-center`}>
                           {tag.toLowerCase().includes('product') ? (
                             <div className="flex shrink-0 items-center rounded-full bg-white px-1 py-0.5 border border-gray-200">
                               <button onClick={() => onRow(row.uid, { qty: Math.max(1, qty - 1) })} className="px-0.5 text-gray-500 font-bold">−</button>
@@ -1090,7 +1090,13 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                               <button onClick={() => onRow(row.uid, { qty: qty + 1 })} className="px-0.5 text-gray-500 font-bold">+</button>
                             </div>
                           ) : (
-                            <span className="text-center text-[11px] font-bold text-black">{qty}</span>
+                            // Same skeleton as the stepper, with the buttons hidden, so a
+                            // fixed quantity sits exactly under the ones you can change.
+                            <div className="flex shrink-0 items-center border border-transparent px-1 py-0.5">
+                              <span aria-hidden className="invisible px-0.5 font-bold">−</span>
+                              <span className="w-4 text-center text-[11px] font-bold text-black">{qty}</span>
+                              <span aria-hidden className="invisible px-0.5 font-bold">+</span>
+                            </div>
                           )}
                         </div>
 
