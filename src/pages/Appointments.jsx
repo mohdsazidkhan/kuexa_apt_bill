@@ -3,16 +3,18 @@ import { useEffect, useMemo, useState } from 'react'
 import GroupBookingModal from '../components/GroupBookingModal'
 import KanbanBoard from '../components/KanbanBoard'
 import TopBar from '../components/TopBar'
-import { appointments, DAY_TODAY, DAY_NEXT } from '../data/appointments'
+import { appointments, undoAppointmentStage, kanbanColumns, DAY_TODAY, DAY_NEXT } from '../data/appointments'
 import { currency } from '../data/services'
 import { IconPlus, IconCalendar, IconUsers, IconGrid, IconMenu, IconClock, IconRefresh, IconSearch, IconClose } from '../components/Icons'
 
-// All the chip counters read off the real data, so they can't drift from the board.
+// All the chip counters read off the real data, so they can't drift from the board —
+// including after a card is moved back a stage, which is why they're counted on every
+// render rather than once at import.
 const inColumn = (key) => appointments.filter((a) => a.column === key).length
 const onDate = (d) => appointments.filter((a) => a.date === d).length
 
 // ---- Top stat chips ----
-const statChips = [
+const buildStatChips = () => [
   { label: "Today's", value: onDate(DAY_TODAY), color: 'text-indigo-600 border-indigo-200' },
   { label: 'Scheduled', value: inColumn('scheduled'), color: 'text-sky-600 border-sky-200' },
   { label: 'In Progress', value: inColumn('inprogress'), color: 'text-amber-600 border-amber-200' },
@@ -29,12 +31,12 @@ const views = [
   { key: 'day', label: 'Day Calendar', icon: IconClock },
 ]
 
-const dateFilters = [
+const buildDateFilters = () => [
   { label: 'Today', value: onDate(DAY_TODAY) },
   { label: 'This Week', value: onDate(DAY_TODAY) + onDate(DAY_NEXT) },
   { label: 'All Dates', value: appointments.length },
 ]
-const statusFilters = [
+const buildStatusFilters = () => [
   { label: 'All Status', value: appointments.length },
   { label: 'Scheduled', value: inColumn('scheduled') },
   { label: 'Confirmed', value: inColumn('checkedin') },
@@ -60,18 +62,37 @@ export default function Appointments() {
   const [dateFilter, setDateFilter] = useState('Today')
   const [statusFilter, setStatusFilter] = useState('All Status')
   const [search, setSearch] = useState('')
+  // Bumped whenever a card is moved between columns, so everything counted off the
+  // shared appointment list is recomputed.
+  const [revision, setRevision] = useState(0)
 
-  // Search across appointment no., client (including a group's guests), phone and services.
+  // Search across appointment no., client (including a group's guests), phone,
+  // services and any retail sold on the appointment.
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return appointments
+    if (!q) return [...appointments]
     const hit = (v) => String(v ?? '').toLowerCase().includes(q)
     return appointments.filter((a) =>
       hit(a.id) || hit(a.customer) || hit(a.phone) ||
       a.guests?.some((g) => hit(g.name) || hit(g.phone)) ||
-      a.services.some((s) => hit(s.name))
+      a.services.some((s) => hit(s.name)) ||
+      a.products?.some((p) => hit(p.name))
     )
-  }, [search])
+  }, [search, revision])
+
+  const statChips = useMemo(buildStatChips, [revision])
+  const dateFilters = useMemo(buildDateFilters, [revision])
+  const statusFilters = useMemo(buildStatusFilters, [revision])
+
+  // "Undo" on a card walks it back one stage — Completed → In Progress →
+  // Checked-In → Scheduled — and says where it landed.
+  const undoStage = (appt) => {
+    const prev = undoAppointmentStage(appt)
+    if (!prev) return
+    setRevision((r) => r + 1)
+    const title = kanbanColumns.find((c) => c.key === prev)?.title ?? prev
+    setToast(`${appt.customer} moved back to ${title}`)
+  }
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(''), 3500)
@@ -139,25 +160,29 @@ export default function Appointments() {
           </div>
         </div>
 
-        {/* Filter row */}
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-100 bg-white p-2">
-          {dateFilters.map((f) => (
-            <Chip key={f.label} active={dateFilter === f.label} onClick={() => setDateFilter(f.label)} label={f.label} value={f.value} />
-          ))}
-          <span className="mx-0.5 h-4 w-px bg-gray-600" />
-          {statusFilters.map((f) => (
-            <Chip key={f.label} active={statusFilter === f.label} onClick={() => setStatusFilter(f.label)} label={f.label} value={f.value} />
-          ))}
-          <select className="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 outline-none">
-            <option>All stylists</option>
-          </select>
+        {/* Filter row — chips take the space they need and wrap among themselves;
+            the search box stays on the row, pinned to the right. */}
+        <div className="mt-1 flex items-center gap-1.5 rounded-xl border border-gray-100 bg-white p-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            {dateFilters.map((f) => (
+              <Chip key={f.label} active={dateFilter === f.label} onClick={() => setDateFilter(f.label)} label={f.label} value={f.value} />
+            ))}
+            <span className="mx-0.5 h-4 w-px bg-gray-600" />
+            {statusFilters.map((f) => (
+              <Chip key={f.label} active={statusFilter === f.label} onClick={() => setStatusFilter(f.label)} label={f.label} value={f.value} />
+            ))}
+            <select className="ml-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 outline-none">
+              <option>All stylists</option>
+            </select>
+          </div>
 
-          <div className="relative ml-1 w-64">
+          <div className="relative w-56 shrink-0">
             <IconSearch width={13} height={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Appt no, client, phone or service..."
+              placeholder="Appt no, client, phone, service..."
+              title="Search by appointment no., client, phone, service or product"
               className="w-full rounded-lg border border-gray-200 bg-white py-1 pl-7 pr-7 text-xs text-gray-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
             />
             {search && (
@@ -177,7 +202,7 @@ export default function Appointments() {
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 pt-1">
         {/* Body */}
         <div className="mt-1 min-h-0 flex-1">
-          {view === 'kanban' && <KanbanBoard appointments={visible} />}
+          {view === 'kanban' && <KanbanBoard appointments={visible} onUndo={undoStage} />}
           {view !== 'kanban' && (
             <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white text-center">
               <span className="text-lg font-semibold text-gray-700">{views.find((v) => v.key === view)?.label} view</span>

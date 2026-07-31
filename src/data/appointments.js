@@ -1,7 +1,7 @@
 // Dummy appointments for the Kanban board.
 // column: scheduled | checkedin | inprogress | completed
 
-import { customers, services, stylists } from './services'
+import { customers, products as productCatalog, services, stylists } from './services'
 
 // Dates are relative to whenever the demo is opened, so the board (and the Payments
 // screen's "upcoming appointments" picker) never go stale.
@@ -25,6 +25,27 @@ export const parseApptDate = (s) => {
 // Billing an appointment closes it out: every service on it is marked Completed.
 export const completeAppointmentServices = (appt) => {
   appt?.services?.forEach((s) => { s.status = 'Completed' })
+}
+
+// One step back along the floor: Completed → In Progress → Checked-In → Scheduled.
+// Only these three can be undone — anything settled, cancelled or rebooked has left
+// the floor and is no longer a step in this sequence.
+const PREVIOUS_COLUMN = {
+  checkedin: 'scheduled',
+  inprogress: 'checkedin',
+  completed: 'inprogress',
+}
+export const previousColumnOf = (appt) => PREVIOUS_COLUMN[appt?.column] ?? null
+
+// Move an appointment back to the state before its current one, taking the service
+// status with it. Returns the column it landed in, or null if there was nothing to
+// undo. A billed appointment stays put — the money has already been taken against it.
+export const undoAppointmentStage = (appt) => {
+  const prev = appt?.billed ? null : previousColumnOf(appt)
+  if (!prev) return null
+  appt.column = prev
+  appt.services?.forEach((s) => { s.status = SERVICE_STATUS[prev] })
+  return prev
 }
 
 // The client record behind an appointment — a real customer when phone/name match,
@@ -88,6 +109,17 @@ const baseAppointments = [
     id: 'APT-20260724090012045-11', time: '9:00 AM', date: DAY_TODAY, source: 'Phone', billed: false,
     customer: 'Ananya Gupta', phone: '9876543210', priority: null, column: 'scheduled',
     services: [{ name: 'Women Ombrè Highlights', category: 'Hair', stylist: 'PRIYA', date: DAY_TODAY, time: '9:00 AM', duration: 120, price: 7000, status: 'Scheduled' }],
+    // Retail taken alongside the service — shown on the card, billed separately.
+    products: [
+      { name: 'MOROCCANOIL INTENSE HYDRATING MASK', qty: 1, price: 5555 },
+      { name: 'BBlunt Intense Moisture Hair Serum', qty: 2, price: 500 },
+    ],
+  },
+  {
+    id: 'APT-20260726104500288-27', time: '11:45 AM', date: DAY_TODAY, source: 'Walk-in', billed: false,
+    customer: 'A Chaudhary', phone: '8697551059', priority: null, column: 'scheduled',
+    services: [{ name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: DAY_TODAY, time: '11:45 AM', duration: 45, price: 440, status: 'Scheduled' }],
+    products: [{ name: 'Hair Oil 200ml', qty: 1, price: 340 }],
   },
 
   // --- CHECKED-IN (2) ---
@@ -304,6 +336,13 @@ kanbanColumns.forEach((col, ci) => {
       }
     })
 
+    // Roughly a third of appointments also sell retail — one item, sometimes two.
+    const prodCount = rand() > 0.66 ? (rand() > 0.78 ? 2 : 1) : 0
+    const retail = Array.from({ length: prodCount }, () => {
+      const p = pick(productCatalog)
+      return { name: p.name, qty: rand() > 0.85 ? 2 : 1, price: p.price }
+    })
+
     fillerAppointments.push({
       id: `APT-2026073${String(100000 + fillerN * 37).padStart(9, '0')}-${String(11 + (fillerN % 88)).padStart(2, '0')}`,
       time,
@@ -319,6 +358,7 @@ kanbanColumns.forEach((col, ci) => {
       column: col.key,
       issue,
       services: items,
+      products: retail,
     })
   }
 })

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { kanbanColumns, accentClasses, serviceStatuses, completeAppointmentServices } from '../data/appointments'
 import { currency } from '../data/services'
-import { IconClock, IconUsers, IconCalendar, IconBilling, IconArrowUp, IconArrowDown, IconChevron, IconExternal } from './Icons'
+import { IconClock, IconUsers, IconCalendar, IconBilling, IconArrowUp, IconArrowDown, IconChevron, IconExternal, IconTag, IconHistory } from './Icons'
 
 // Columns whose cards should NOT show the Bill button — either nothing is left to
 // bill, or (DRAFT) the appointment isn't confirmed yet. PARTIAL PAID keeps it,
@@ -39,6 +39,14 @@ const CANCEL_COLUMNS = ['scheduled', 'checkedin', 'draft', 'waiting', 'partialad
 
 // Dead-end columns whose only way forward is booking the appointment again.
 const REBOOK_COLUMNS = ['cancelled', 'noshow']
+
+// Where "Undo" sends a card — one stage back along the floor. The label names the
+// state it lands in, so the button says what it will do.
+const UNDO_TARGET = {
+  checkedin: 'Scheduled',
+  inprogress: 'Checked-In',
+  completed: 'In Progress',
+}
 
 // What's actually wrong with a DANGEROUS card, and the fix it needs.
 const ISSUE_TEXT = {
@@ -81,6 +89,8 @@ function ActionBtn({ children, variant = 'ghost', className = '', onClick, disab
     primary: 'bg-[#4a7196] text-white hover:bg-[#3d6083]',
     ghost: 'border border-gray-200 text-gray-600 hover:bg-gray-50',
     danger: 'border border-rose-200 text-rose-600 hover:bg-rose-50',
+    // stepping the card back — pink, so it reads apart from the blue "move forward"
+    undo: 'border border-pink-300 bg-pink-100 text-pink-700 hover:bg-pink-200',
     // reference action — points back at history rather than doing something
     linked: 'border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
   }
@@ -114,7 +124,7 @@ function ScrollArrow({ side, onClick, disabled }) {
   )
 }
 
-function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked, cardRef, flash }) {
+function Card({ appt, showBill = true, onBill, onRefund, onReceive, onUndo, onOpenLinked, cardRef, flash }) {
   const total = appt.services.reduce((s, x) => s + x.price, 0)
   // A finished appointment can't be edited at all; a billed one can't be billed again.
   const showEdit = !NO_EDIT_COLUMNS.includes(appt.column)
@@ -126,6 +136,9 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked
   // Still only booked in — paid or not, the client has yet to be checked in.
   const canCheckIn = appt.column === 'scheduled' || SCHEDULED_ISSUES.includes(appt.issue)
   const isPartPaid = appt.column === 'partialpaid' || PART_PAID_ISSUES.includes(appt.issue)
+  // A card that has moved along the floor can be walked back a stage, unless a bill
+  // has already been raised against it.
+  const undoTo = !appt.billed ? UNDO_TARGET[appt.column] : null
   const pay = payState(appt)
   // A completed but still-unpaid appointment keeps an editable status.
   const statusLocked =
@@ -256,16 +269,50 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked
         ))}
       </div>
 
+      {/* Retail sold alongside the services — priced per line, not part of the
+          appointment total, which stays the service total the bill is raised on. */}
+      {appt.products?.length > 0 && (
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-amber-700">
+            <IconTag width={11} height={11} /> Products
+          </div>
+          <div className="mt-1 space-y-0.5">
+            {appt.products.map((p, i) => (
+              <div key={i} className="flex items-center justify-between gap-2">
+                <span title={p.name} className="min-w-0 truncate text-xs font-medium text-gray-700">
+                  {p.name} <span className="text-gray-500">× {p.qty}</span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-indigo-600">
+                  {currency(p.price * p.qty)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="mt-2 space-y-2">
-        {/* While the card is still only scheduled the two share a row; elsewhere
-            Complete Appt. stands alone. */}
-        {canComplete && (
-          <div className={canCheckIn ? 'grid grid-cols-2 gap-2' : ''}>
+        {/* Moving the card along the floor — and back. Undo pairs up with Complete
+            Appt. where both apply; on a COMPLETED card it stands alone. */}
+        {(canComplete || undoTo) && (
+          <div className={(canCheckIn || undoTo) && canComplete ? 'grid grid-cols-2 gap-2' : ''}>
             {canCheckIn && (
               <ActionBtn variant="primary" className="w-full">✓ Check In</ActionBtn>
             )}
-            <ActionBtn variant="primary" className="w-full">✓ Complete Appt.</ActionBtn>
+            {undoTo && (
+              <ActionBtn
+                onClick={() => onUndo?.(appt)}
+                variant="undo"
+                title={`Move this appointment back to ${undoTo}`}
+                className="flex w-full items-center justify-center gap-1.5"
+              >
+                <IconHistory width={13} height={13} /> Undo · {undoTo}
+              </ActionBtn>
+            )}
+            {canComplete && (
+              <ActionBtn variant="primary" className="w-full">✓ Complete Appt.</ActionBtn>
+            )}
           </div>
         )}
 
@@ -360,7 +407,7 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked
   )
 }
 
-export default function KanbanBoard({ appointments }) {
+export default function KanbanBoard({ appointments, onUndo }) {
   // Per-column time sort direction: undefined = unsorted, 'asc' | 'desc'.
   const [sortDir, setSortDir] = useState({})
   const [confirmAppt, setConfirmAppt] = useState(null) // "Bill Now" confirmation
@@ -562,6 +609,7 @@ export default function KanbanBoard({ appointments }) {
                   onBill={setConfirmAppt}
                   onRefund={refundAppt}
                   onReceive={receivePending}
+                  onUndo={onUndo}
                   onOpenLinked={openLinked}
                   cardRef={(n) => { cardNodes.current[appt.id] = n }}
                   flash={flashId === appt.id}
