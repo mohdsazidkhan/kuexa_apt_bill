@@ -208,9 +208,15 @@ export default function GroupBookingModal({ open, onClose, onBooked }) {
   const handleBook = () => {
     onBooked?.(guests.length)
   }
+  // Confirming a booking with "Take Payment Now" on carries the party over to the
+  // New Bill drawer — same clients, same items — rather than dropping the user on an
+  // empty bill.
   const handleBookAndPay = () => {
+    const party = guests
+      .filter((g) => g.customer || g.rows.length > 0)
+      .map((g) => ({ customer: g.customer, rows: g.rows.map((r) => ({ ...r })) }))
     onClose?.()
-    navigate('/billing')
+    navigate('/billing', { state: party.length ? { billGuests: party } : null })
   }
 
   const showAll = active === 'all' || !activeGuest

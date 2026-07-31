@@ -120,7 +120,7 @@ const makePlaceholderGuest = (G, existing) => {
   }
 }
 
-export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, initialAppointment = null }) {
+export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, initialAppointment = null, initialGuests = null }) {
   const [guests, setGuests] = useState(() => [newGuest()])
   const [active, setActive] = useState(() => guests[0]?.id)
   const [browseFor, setBrowseFor] = useState(null) // guestId while Browse modal is open
@@ -280,6 +280,25 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
     setOffersApplied(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialAppointment])
+
+  // "Book and Pay Now" on a new appointment hands the whole party straight over:
+  // every guest, their client and everything on their list, so the bill opens where
+  // the booking left off. Rows are the same shape in both drawers, so products and
+  // offers keep their own type instead of collapsing into services.
+  const loadedGuestsRef = useRef(null)
+  useEffect(() => {
+    if (!open || !initialGuests?.length) return
+    if (loadedGuestsRef.current === initialGuests) return
+    loadedGuestsRef.current = initialGuests
+    const built = initialGuests.map((g) => ({
+      ...newGuest(),
+      customer: g.customer ?? null,
+      rows: (g.rows ?? []).map((r) => ({ ...r })),
+    }))
+    setGuests(built)
+    setActive(built[0].id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialGuests])
 
   // Resolve the confirm: target = a guest id, or 'new'.
   const resolveSplit = (target) => {

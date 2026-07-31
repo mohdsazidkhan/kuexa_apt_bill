@@ -200,6 +200,7 @@ const pageNumbers = (page, total) => {
 export default function Billing() {
   const [newBillOpen, setNewBillOpen] = useState(false)
   const [billAppt, setBillAppt] = useState(null) // appointment handed over by "Bill Now"
+  const [billGuests, setBillGuests] = useState(null) // party handed over by "Book and Pay Now"
   const [toast, setToast] = useState('')
   const location = useLocation()
   const navigate = useNavigate()
@@ -210,12 +211,15 @@ export default function Billing() {
     return () => clearTimeout(t)
   }, [toast])
 
-  // Arriving from a Kanban card's "Bill Now" → Yes: open the drawer on that appointment.
-  // The state is cleared straight away so a reload doesn't re-open it.
+  // Arriving from a Kanban card's "Bill Now" → Yes, or from "Book and Pay Now" on a
+  // new appointment: open the drawer on that appointment / that party. The state is
+  // cleared straight away so a reload doesn't re-open it.
   useEffect(() => {
     const appt = location.state?.billAppointment
-    if (!appt) return
-    setBillAppt(appt)
+    const party = location.state?.billGuests
+    if (!appt && !party) return
+    if (appt) setBillAppt(appt)
+    if (party) setBillGuests(party)
     setNewBillOpen(true)
     navigate(location.pathname, { replace: true, state: null })
   }, [location.state, location.pathname, navigate])
@@ -639,6 +643,7 @@ export default function Billing() {
       <NewBillModal
         open={newBillOpen}
         initialAppointment={billAppt}
+        initialGuests={billGuests}
         onClose={() => setNewBillOpen(false)}
         onBooked={() => {
           setNewBillOpen(false);
