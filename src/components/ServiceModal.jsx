@@ -37,7 +37,8 @@ export default function ServiceModal({ open, onClose, onAdd, restrictedTab }) {
     }
     if (query.trim()) {
       const q = query.toLowerCase()
-      list = list.filter((s) => s.name.toLowerCase().includes(q))
+      // A product is findable by its brand as well as its name.
+      list = list.filter((s) => s.name.toLowerCase().includes(q) || s.brand?.toLowerCase().includes(q))
     }
     return list
   }, [active, tab, category, query])
@@ -126,21 +127,32 @@ export default function ServiceModal({ open, onClose, onAdd, restrictedTab }) {
               if (items.length === 0) {
                 return <div className="w-full py-10 text-center text-sm text-gray-400">No items found</div>;
               }
+              // Products are shelved by brand — that's how stock is bought and
+              // counted. Services and offers stay grouped by category / type.
+              const byBrand = tab === 'products';
               const groups = {};
               items.forEach(item => {
-                const cat = item.category || item.type || 'Other';
-                if (!groups[cat]) groups[cat] = [];
-                groups[cat].push(item);
+                const key = byBrand
+                  ? (item.brand || 'Other')
+                  : (item.category || item.type || 'Other');
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(item);
               });
 
-              const groupCount = Object.keys(groups).length;
+              // Brands run to a few dozen, so they're alphabetical to scan through;
+              // categories keep the order they're listed in.
+              const groupEntries = byBrand
+                ? Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]))
+                : Object.entries(groups);
+
+              const groupCount = groupEntries.length;
               const columnStyle = groupCount <= 3
                 ? { columnCount: groupCount, columnGap: '1rem' }
                 : { columnWidth: '300px', columnGap: '1rem' };
 
               return (
                 <div className="h-full" style={columnStyle}>
-                  {Object.entries(groups).map(([cat, catItems]) => (
+                  {groupEntries.map(([cat, catItems]) => (
                     <div key={cat} className="break-inside-avoid mb-4 border border-gray-200 bg-white shadow-sm flex flex-col rounded overflow-hidden">
                       <div className="bg-[#36536b] text-white text-center text-[11px] font-bold py-1.5 uppercase tracking-wider shrink-0">
                         {cat}
