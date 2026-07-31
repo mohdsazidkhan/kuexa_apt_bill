@@ -79,8 +79,9 @@ const baseAppointments = [
       { name: 'Vikram Singh', phone: '9812345678' },
     ],
     services: [
-      { name: 'Blow Dry & Styling', category: 'Hair', stylist: '', date: DAY_TODAY, time: '4:52 PM', duration: 45, price: 440, status: 'Scheduled', client: 'Priya Sharma' },
-      { name: 'Facial - Basic Clean-Up', category: 'Skin Care', stylist: '', date: DAY_TODAY, time: '5:37 PM', duration: 60, price: 900, status: 'Scheduled', client: 'Vikram Singh' },
+      // Each guest's service names its own stylist, same as on a single booking.
+      { name: 'Blow Dry & Styling', category: 'Hair', stylist: 'SNEHA', date: DAY_TODAY, time: '4:52 PM', duration: 45, price: 440, status: 'Scheduled', client: 'Priya Sharma' },
+      { name: 'Facial - Basic Clean-Up', category: 'Skin Care', stylist: 'IMRAN', date: DAY_TODAY, time: '5:37 PM', duration: 60, price: 900, status: 'Scheduled', client: 'Vikram Singh' },
     ],
   },
   {
@@ -238,6 +239,21 @@ const SERVICE_STATUS = {
 // is money taken up front, not a raised bill — those columns still need billing.
 const BILLED_COLUMNS = ['paid', 'refunded']
 
+// The ways the books and the floor drift apart, cycled across the DANGEROUS column.
+// Each one fixes the service status the card reads at, whether a bill was raised and
+// settled in full, and what share of the total has actually been collected. A part
+// payment leaves `billed` false — the balance is still to take, exactly as on
+// PARTIAL PAID.
+export const DANGEROUS_ISSUES = [
+  { key: 'paid-not-completed', status: 'In Progress', billed: true, collected: 1 },
+  { key: 'done-not-paid', status: 'Completed', billed: false, collected: 0 },
+  { key: 'scheduled-paid', status: 'Scheduled', billed: true, collected: 1 },
+  { key: 'scheduled-partpaid', status: 'Scheduled', billed: false, collected: 0.4 },
+  { key: 'checkedin-paid', status: 'Confirmed', billed: true, collected: 1 },
+  { key: 'checkedin-partpaid', status: 'Confirmed', billed: false, collected: 0.4 },
+]
+const issueDef = (key) => DANGEROUS_ISSUES.find((d) => d.key === key) ?? null
+
 const SOURCES = ['Walk-in', 'Phone', 'Online', 'WhatsApp']
 const SLOT_TIMES = [
   '9:15 AM', '10:00 AM', '10:45 AM', '11:30 AM', '12:15 PM', '1:00 PM',
@@ -267,14 +283,12 @@ kanbanColumns.forEach((col, ci) => {
     const time = SLOT_TIMES[(ci * 3 + i) % SLOT_TIMES.length]
     const count = rand() > 0.72 ? 2 : 1
 
-    // DANGEROUS holds the two ways the books and the floor drift apart, alternating:
-    // money taken while the work still reads In Progress, and work finished with
-    // nothing collected.
-    const issue = col.key !== 'dangerous' ? null
-      : i % 2 === 0 ? 'paid-not-completed' : 'done-not-paid'
-    const status = issue === 'paid-not-completed' ? 'In Progress'
-      : issue === 'done-not-paid' ? 'Completed'
-        : SERVICE_STATUS[col.key] ?? 'Scheduled'
+    // DANGEROUS cycles through every way the books and the floor drift apart —
+    // money taken (in part or in full) while the work still reads Scheduled,
+    // Confirmed or In Progress, and work finished with nothing collected.
+    const dang = col.key === 'dangerous' ? DANGEROUS_ISSUES[i % DANGEROUS_ISSUES.length] : null
+    const issue = dang?.key ?? null
+    const status = dang?.status ?? SERVICE_STATUS[col.key] ?? 'Scheduled'
 
     const items = Array.from({ length: count }, (_, k) => {
       const sv = pick(services)
@@ -296,8 +310,8 @@ kanbanColumns.forEach((col, ci) => {
       date,
       source: pick(SOURCES),
       // Only a settled appointment carries a bill.
-      billed: issue
-        ? issue === 'paid-not-completed'
+      billed: dang
+        ? dang.billed
         : BILLED_COLUMNS.includes(col.key) || (col.key === 'completed' && i % 2 === 0),
       customer: client.name,
       phone: client.phone,
@@ -314,7 +328,9 @@ kanbanColumns.forEach((col, ci) => {
 // nothing anywhere else. This is what the Payments screen can hand back.
 const collectedOn = (a) => {
   const total = a.services.reduce((s, sv) => s + (Number(sv.price) || 0), 0)
-  if (a.column === 'dangerous') return a.billed ? total : 0
+  // On a DANGEROUS card the money is whatever the issue says was collected, which
+  // is the whole point of the card: it doesn't match the work.
+  if (a.column === 'dangerous') return Math.round(total * (issueDef(a.issue)?.collected ?? 0))
   if (a.column === 'fulladvance' || a.column === 'paid') return total
   if (a.column === 'partialadvance' || a.column === 'partialpaid') return Math.round(total * 0.4)
   return 0

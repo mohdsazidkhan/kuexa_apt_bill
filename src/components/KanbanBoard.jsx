@@ -25,7 +25,9 @@ const PAY_STATE_BY_COLUMN = {
   refunded: { label: 'Refunded', chip: 'bg-pink-100 text-pink-700', text: 'font-semibold text-pink-700' },
 }
 const payState = (appt) =>
-  PAY_STATE_BY_COLUMN[appt.column] ?? (appt.billed
+  // A part-paid DANGEROUS card reads the same as the PARTIAL PAID column.
+  (PART_PAID_ISSUES.includes(appt.issue) ? PAY_STATE_BY_COLUMN.partialpaid : null)
+  ?? PAY_STATE_BY_COLUMN[appt.column] ?? (appt.billed
     ? { label: 'Paid', chip: 'bg-emerald-50 text-emerald-600', text: 'font-semibold text-emerald-600' }
     : { label: 'Unpaid', chip: 'bg-gray-100 text-gray-500', text: 'text-gray-400' })
 
@@ -42,7 +44,17 @@ const REBOOK_COLUMNS = ['cancelled', 'noshow']
 const ISSUE_TEXT = {
   'paid-not-completed': 'Payment taken, but the services are still In Progress',
   'done-not-paid': 'Services completed, but no payment has been taken',
+  'scheduled-paid': 'Payment taken in full, but the services are still Scheduled',
+  'scheduled-partpaid': 'Part payment taken, but the services are still Scheduled',
+  'checkedin-paid': 'Payment taken in full, but the client is only Checked-In',
+  'checkedin-partpaid': 'Part payment taken, but the client is only Checked-In',
 }
+
+// DANGEROUS cards where money changed hands before the work — part of it on a
+// -partpaid issue, so those still have a balance to collect.
+const PART_PAID_ISSUES = ['scheduled-partpaid', 'checkedin-partpaid']
+// …and the ones still sitting at SCHEDULED, which can be checked in.
+const SCHEDULED_ISSUES = ['scheduled-paid', 'scheduled-partpaid']
 
 // Columns that are closed out one way or another — the service status is fixed.
 // COMPLETED is the exception: it only locks once the bill has been paid.
@@ -110,8 +122,10 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked
   const canCancel = CANCEL_COLUMNS.includes(appt.column)
   const canRefund = REFUND_COLUMNS.includes(appt.column) && appt.paidAmount > 0
   // A paid-but-unfinished card needs completing; an unpaid-but-finished one needs billing.
-  const canComplete = COMPLETE_COLUMNS.includes(appt.column) || appt.issue === 'paid-not-completed'
-  const isPartPaid = appt.column === 'partialpaid'
+  const canComplete = COMPLETE_COLUMNS.includes(appt.column) || (!!appt.issue && appt.issue !== 'done-not-paid')
+  // Still only booked in — paid or not, the client has yet to be checked in.
+  const canCheckIn = appt.column === 'scheduled' || SCHEDULED_ISSUES.includes(appt.issue)
+  const isPartPaid = appt.column === 'partialpaid' || PART_PAID_ISSUES.includes(appt.issue)
   const pay = payState(appt)
   // A completed but still-unpaid appointment keeps an editable status.
   const statusLocked =
@@ -198,7 +212,7 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked
                 <span title={sv.name} className="truncate text-sm font-semibold text-gray-800">
                   {sv.name}
                 </span>
-                <span className={`shrink-0 text-[11px] ${catColor}`}>· {sv.duration}m</span>
+                <span className={`shrink-0 text-xs font-bold ${catColor}`}>· {sv.duration}m</span>
               </span>
               <span className="shrink-0 text-sm font-semibold text-indigo-600">{currency(sv.price)}</span>
             </div>
@@ -244,10 +258,11 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onOpenLinked
 
       {/* Actions */}
       <div className="mt-2 space-y-2">
-        {/* On SCHEDULED the two share a row; elsewhere Complete Appt. stands alone. */}
+        {/* While the card is still only scheduled the two share a row; elsewhere
+            Complete Appt. stands alone. */}
         {canComplete && (
-          <div className={appt.column === 'scheduled' ? 'grid grid-cols-2 gap-2' : ''}>
-            {appt.column === 'scheduled' && (
+          <div className={canCheckIn ? 'grid grid-cols-2 gap-2' : ''}>
+            {canCheckIn && (
               <ActionBtn variant="primary" className="w-full">✓ Check In</ActionBtn>
             )}
             <ActionBtn variant="primary" className="w-full">✓ Complete Appt.</ActionBtn>
