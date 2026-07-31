@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { appointments } from '../data/appointments'
-import { IconClose } from './Icons'
+import { IconClose, IconUser, IconUsers } from './Icons'
 
 // Kanban column -> the status label / colour shown against an appointment.
 const STATUS = {
@@ -47,7 +47,14 @@ export default function LoadAppointmentModal({ open, onClose, onLoad, initialQue
   const EXCLUDED = ['cancelled', 'partialadvance', 'fulladvance', 'paid', 'refunded']
   const list = appointments.filter((a) =>
     !EXCLUDED.includes(a.column) &&
-    (!term || [a.id, a.customer, a.phone, statusOf(a).label].some((v) => (v || '').toLowerCase().includes(term)))
+    (!term || [
+      a.id,
+      a.customer,
+      a.phone,
+      statusOf(a).label,
+      // a group booking's clients are its guests, so they're searchable too
+      ...(a.guests ?? []).flatMap((g) => [g.name, g.phone]),
+    ].some((v) => (v || '').toLowerCase().includes(term)))
   )
 
   return (
@@ -77,17 +84,43 @@ export default function LoadAppointmentModal({ open, onClose, onLoad, initialQue
           {list.map((a) => {
             const st = statusOf(a)
             return (
-              <div key={a.id} className="flex items-center gap-3 border-b border-gray-100 py-3 last:border-0">
+              <div key={a.id} className="flex items-center gap-2 border-b border-gray-300 py-2 last:border-0">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="truncate text-sm font-semibold text-indigo-500">{a.id}</span>
                     <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
+                    {/* group or single, at a glance */}
+                    {a.group ? (
+                      <span
+                        title={`Group booking · ${a.guests?.length ?? a.clients ?? 0} clients`}
+                        className="flex items-center gap-1 rounded bg-fuchsia-50 px-1.5 py-0.5 text-[11px] font-semibold text-fuchsia-600"
+                      >
+                        <IconUsers width={12} height={12} /> {a.guests?.length ?? a.clients}
+                      </span>
+                    ) : (
+                      <span
+                        title="Single client"
+                        className="flex items-center gap-1 rounded bg-sky-50 px-1.5 py-0.5 text-[11px] font-semibold text-sky-600"
+                      >
+                        <IconUser width={12} height={12} /> 1
+                      </span>
+                    )}
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-gray-500">
                     <span>{a.date}</span>
-                    {a.customer && a.customer !== 'Group' && (
-                      <span>{a.customer}{a.phone ? ` · ${a.phone}` : ''}</span>
-                    )}
+                    {a.group && a.guests?.length > 0 ? (
+                      <span
+                        title={a.guests.map((g) => `${g.name}${g.phone ? ` · ${g.phone}` : ''}`).join(', ')}
+                        className="font-medium text-fuchsia-600"
+                      >
+                       {a.guests.map((g) => g.name).join(' and ')}
+                      </span>
+                    ) : a.customer && a.customer !== 'Group' ? (
+                      // single client in sky, the same pairing as its badge — group is fuchsia
+                      <span className="font-medium text-sky-600">
+                        {a.customer}{a.phone ? ` · ${a.phone}` : ''}
+                      </span>
+                    ) : null}
                     <span>{a.services.length} service(s)</span>
                   </div>
                 </div>

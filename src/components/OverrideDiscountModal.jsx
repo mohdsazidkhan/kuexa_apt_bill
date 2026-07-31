@@ -11,7 +11,7 @@ export const COUPONS = [
 
 const TYPES = [
   { id: 'coupon', label: 'Coupon Code' },
-  { id: 'amount', label: 'Amount' },
+  { id: 'amount', label: 'Flat' },
   { id: 'percentage', label: 'Percentage' },
 ]
 

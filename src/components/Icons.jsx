@@ -19,6 +19,10 @@ export const IconOperations = (p) => (
 export const IconCalendar = (p) => (
   <svg {...base} {...p}><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M8 2v4M16 2v4M3 10h18" /></svg>
 )
+// one client, as against IconUsers for a group
+export const IconUser = (p) => (
+  <svg {...base} {...p}><circle cx="12" cy="8" r="3.5" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></svg>
+)
 export const IconUsers = (p) => (
   <svg {...base} {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M17 5.2a3.5 3.5 0 0 1 0 6.6M21.5 20a6.5 6.5 0 0 0-4-6" /></svg>
 )
