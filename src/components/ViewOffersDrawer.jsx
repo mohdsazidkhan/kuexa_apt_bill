@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { IconClose } from './Icons'
 import TransactionHistoryDrawer from './TransactionHistoryDrawer'
 import OfferDetailDrawer from './OfferDetailDrawer'
+import useDrawerTransition from './useDrawerTransition'
 
 const dummyOffers = [
   { id: 1, name: 'Prime membership (8373)', user: 'Anshu Saini', type: 'Membership', data: '10.00 %', end: '30-10-2026' },
@@ -20,26 +21,36 @@ const dummyOffers = [
 export default function ViewOffersDrawer({ open, onClose, customer }) {
   const [selectedHistoryOffer, setSelectedHistoryOffer] = useState(null)
   const [selectedDetailOffer, setSelectedDetailOffer] = useState(null)
+  // Slides in from the right and back out again, same as the F&F drawer.
+  const { mounted, shown, value: client } = useDrawerTransition(open, customer)
 
-  if (!customer) return null
+  // Nothing stacked on top survives the drawer closing.
+  useEffect(() => {
+    if (!open) {
+      setSelectedHistoryOffer(null)
+      setSelectedDetailOffer(null)
+    }
+  }, [open])
+
+  if (!mounted || !client) return null
 
   return (
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ${shown ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
       />
 
       <div
         style={{ width: 'calc(100% - 16rem)' }}
-        className={`fixed right-0 top-0 z-50 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-50 flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${shown ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
           }`}
       >
         {/* Header */}
         <div className="flex items-center justify-center bg-[#2c4c6b] px-2 py-1 text-white relative">
           <h2 className="text-lg font-bold tracking-wide">
-            {customer.name}&apos;s Offers
+            {client.name}&apos;s Offers
           </h2>
           <button onClick={onClose} className="absolute right-4 top-1 rounded p-1 hover:bg-[#1a3551]">
             <IconClose width={20} height={20} />

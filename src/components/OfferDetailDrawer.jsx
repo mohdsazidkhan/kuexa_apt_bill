@@ -1,4 +1,5 @@
 import { IconClose } from './Icons'
+import useDrawerTransition from './useDrawerTransition'
 
 const dummyServices = [
   { id: 1, name: "Men's Haircut", type: 'Service' },
@@ -29,8 +30,11 @@ const dummyComboServices = [
   { id: 2, name: "Women Hair Colour Cleansing", type: 'Service', qty: 1 },
 ]
 
-export default function OfferDetailDrawer({ open, onClose, offer }) {
-  if (!open || !offer) return null
+export default function OfferDetailDrawer({ open, onClose, offer: offerProp }) {
+  // Slides in from the right and back out again, same as the F&F drawer.
+  const { mounted, shown, value: offer } = useDrawerTransition(open, offerProp)
+
+  if (!mounted || !offer) return null
 
   const isQuantityBased = offer.type === 'Package' || offer.type === 'ComboOffer'
   const isMembership = offer.type === 'Membership'
@@ -51,13 +55,13 @@ export default function OfferDetailDrawer({ open, onClose, offer }) {
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${shown ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
       />
 
       <div
         style={{ width: 'calc(100% - 12rem)' }}
-        className={`fixed right-0 top-0 z-[60] flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-[60] flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${shown ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
           }`}
       >
         {/* Header */}

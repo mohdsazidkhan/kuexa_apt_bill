@@ -1,4 +1,5 @@
 import { IconClose } from './Icons'
+import useDrawerTransition from './useDrawerTransition'
 
 const dummyHistoryMem = [
   {
@@ -33,27 +34,30 @@ const dummyHistoryPkg = [
 ]
 
 export default function TransactionHistoryDrawer({ open, onClose, offerName }) {
-  if (!open) return null
+  // Slides in from the right and back out again, same as the F&F drawer.
+  const { mounted, shown, value: name } = useDrawerTransition(open, offerName)
 
-  const dummyHistory = offerName?.includes('Package') ? dummyHistoryPkg : dummyHistoryMem
+  if (!mounted) return null
+
+  const dummyHistory = name?.includes('Package') ? dummyHistoryPkg : dummyHistoryMem
 
   return (
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${open ? 'opacity-100' : 'pointer-events-none opacity-0'
+        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${shown ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
       />
 
       <div
         style={{ width: 'calc(100% - 12rem)' }}
-        className={`fixed right-0 top-0 z-[60] flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${open ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-[60] flex h-screen flex-col bg-white transition-transform duration-300 ease-out ${shown ? 'translate-x-0 shadow-2xl' : 'translate-x-full'
           }`}
       >
         {/* Header */}
         <div className="flex items-center justify-center bg-[#46667d] px-2 py-1 text-white relative">
           <h2 className="text-lg font-bold tracking-wide">
-            {offerName} Transaction History
+            {name} Transaction History
           </h2>
           <button onClick={onClose} className="absolute right-4 top-1 rounded p-1 hover:bg-[#344d5f]">
             <IconClose width={20} height={20} />
