@@ -76,7 +76,8 @@ export default function Appointments() {
       hit(a.id) || hit(a.customer) || hit(a.phone) ||
       a.guests?.some((g) => hit(g.name) || hit(g.phone)) ||
       a.services.some((s) => hit(s.name)) ||
-      a.products?.some((p) => hit(p.name))
+      a.products?.some((p) => hit(p.name)) ||
+      a.offers?.some((o) => hit(o.name))
     )
   }, [search, revision])
 

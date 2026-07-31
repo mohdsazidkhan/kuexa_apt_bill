@@ -291,6 +291,26 @@ function Card({ appt, showBill = true, onBill, onRefund, onReceive, onUndo, onOp
         </div>
       )}
 
+      {/* Memberships, packages and gift cards taken on the appointment — like the
+          retail, they bill alongside the services. */}
+      {appt.offers?.length > 0 && (
+        <div className="mt-2 rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-2 py-1.5">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-fuchsia-700">
+            <IconTag width={11} height={11} /> Offers
+          </div>
+          <div className="mt-1 space-y-0.5">
+            {appt.offers.map((o, i) => (
+              <div key={i} className="flex items-center justify-between gap-2">
+                <span title={o.name} className="min-w-0 truncate text-xs font-medium text-gray-700">
+                  {o.name} <span className="text-gray-500">· {o.type}</span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-indigo-600">{currency(o.price)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="mt-2 space-y-2">
         {/* Moving the card along the floor — and back. Undo pairs up with Complete

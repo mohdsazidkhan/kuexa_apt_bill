@@ -1,7 +1,7 @@
 // Dummy appointments for the Kanban board.
 // column: scheduled | checkedin | inprogress | completed
 
-import { customers, products as productCatalog, services, stylists } from './services'
+import { customers, plans as planCatalog, products as productCatalog, services, stylists } from './services'
 
 // Dates are relative to whenever the demo is opened, so the board (and the Payments
 // screen's "upcoming appointments" picker) never go stale.
@@ -114,12 +114,19 @@ const baseAppointments = [
       { name: 'MOROCCANOIL INTENSE HYDRATING MASK', qty: 1, price: 5555 },
       { name: 'BBlunt Intense Moisture Hair Serum', qty: 2, price: 500 },
     ],
+    // Memberships, packages and gift cards taken on the appointment — they bill
+    // alongside the services and the retail.
+    offers: [{ name: 'Gold Membership - 6 Months', type: 'Membership', price: 9999 }],
   },
   {
     id: 'APT-20260726104500288-27', time: '11:45 AM', date: DAY_TODAY, source: 'Walk-in', billed: false,
     customer: 'A Chaudhary', phone: '8697551059', priority: null, column: 'scheduled',
     services: [{ name: 'Blow Dry & Styling', category: 'Hair', stylist: 'POONAM', date: DAY_TODAY, time: '11:45 AM', duration: 45, price: 440, status: 'Scheduled' }],
     products: [{ name: 'Hair Oil 200ml', qty: 1, price: 340 }],
+    offers: [
+      { name: 'Monthly Root Touchup Package', type: 'Package', price: 3000 },
+      { name: 'Gift Card - ₹2000', type: 'Gift Card', price: 2000 },
+    ],
   },
 
   // --- CHECKED-IN (2) ---
@@ -343,6 +350,10 @@ kanbanColumns.forEach((col, ci) => {
       return { name: p.name, qty: rand() > 0.85 ? 2 : 1, price: p.price }
     })
 
+    // Every fifth or so appointment also sells a membership, package or gift card.
+    const offer = rand() > 0.82 ? pick(planCatalog) : null
+    const offers = offer ? [{ name: offer.name, type: offer.type, price: offer.price }] : []
+
     fillerAppointments.push({
       id: `APT-2026073${String(100000 + fillerN * 37).padStart(9, '0')}-${String(11 + (fillerN % 88)).padStart(2, '0')}`,
       time,
@@ -359,6 +370,7 @@ kanbanColumns.forEach((col, ci) => {
       issue,
       services: items,
       products: retail,
+      offers,
     })
   }
 })

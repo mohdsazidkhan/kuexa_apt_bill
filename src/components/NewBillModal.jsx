@@ -236,22 +236,43 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
     time: s.time,
   })
 
+  // Retail sold on the appointment, carried over with its quantity.
+  const apptProductRow = (p) => ({
+    ...itemToRow({ kind: 'product', name: p.name, category: p.category, price: p.price }),
+    qty: p.qty || 1,
+  })
+
+  // A membership / package / gift card taken on the appointment keeps its own type.
+  const apptOfferRow = (o) => itemToRow({ kind: 'plan', type: o.type, name: o.name, price: o.price })
+
+  // Everything else on the appointment beyond its services — the retail and the
+  // offers, which belong to the appointment rather than to any one of its clients.
+  const apptExtraRows = (appt) => [
+    ...(appt.products ?? []).map(apptProductRow),
+    ...(appt.offers ?? []).map(apptOfferRow),
+  ]
+
   const apptCustomer = (name, phone, fallbackId) => {
     const matched = customers.find((c) => (phone && c.phone === phone) || c.name === name)
     return { id: matched?.id ?? fallbackId, name, phone: phone || '', gender: matched?.gender ?? null }
   }
 
-  // Load an appointment into the active guest: its services become rows, and the
-  // appointment's client fills the guest if none was picked yet. A group booking
-  // instead lands as one guest per client, each carrying only their own services.
+  // Load an appointment into the active guest: everything on it — services, products
+  // and offers — becomes rows, and the appointment's client fills the guest if none
+  // was picked yet. A group booking instead lands as one guest per client, each
+  // carrying their own services; the shared retail and offers go to the first.
   const loadAppointment = (appt) => {
     if (!activeGuest) return
 
     if (appt.group && appt.guests?.length) {
-      const built = appt.guests.map((g) => ({
+      const extras = apptExtraRows(appt)
+      const built = appt.guests.map((g, i) => ({
         ...newGuest(),
         customer: apptCustomer(g.name, g.phone, `${appt.id}-${g.name}`),
-        rows: appt.services.filter((s) => s.client === g.name).map(apptRow),
+        rows: [
+          ...appt.services.filter((s) => s.client === g.name).map(apptRow),
+          ...(i === 0 ? extras : []),
+        ],
       }))
       // Replace an untouched bill, otherwise add the party alongside what's already there.
       const blank = guests.length === 1 && !guests[0].customer && guests[0].rows.length === 0
@@ -260,7 +281,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
       return
     }
 
-    const rows = appt.services.map(apptRow)
+    const rows = [...appt.services.map(apptRow), ...apptExtraRows(appt)]
     const patch = { rows: [...activeGuest.rows, ...rows] }
     if (!activeGuest.customer && appt.customer && appt.customer !== 'Group') {
       patch.customer = apptCustomer(appt.customer, appt.phone, appt.id)
