@@ -18,7 +18,7 @@ import {
   cInput, Field, StylistSelect, AssistantSelect, SearchSelect, MultiSearchSelect,
   FUTURE_DATES, TIME_SLOTS, DEFAULT_TIME, tagStyle, kindMeta, itemToRow, GenderBadge, serviceGender,
 } from './apptFields'
-import { IconClose, IconUsers, IconGrid, IconPlus, IconHome, IconMenu } from './Icons'
+import { IconClose, IconUsers, IconGrid, IconPlus, IconHome, IconMenu, IconTag } from './Icons'
 
 // Billing summary money: always 2 decimals, and every step rounded so 6720 * 0.18
 // can't leak 1209.6000000000001 into the next line.
@@ -27,20 +27,30 @@ const money = (n) =>
   '₹' + round2(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 // Line-level discount of a row — driven entirely by its own Disc. Type / value
-// (Custom Discount ₹ or %, Prive Member, 10%, 20%). No item carries a default discount.
+// (Custom Discount ₹ or %, Prive Member, 10%, 20%, an applied offer). A row starts
+// with no discount type at all; no item carries a default discount.
 const rowAmount = (r) => (Number(r.price) || 0) * (r.qty || 1)
+const discTypesOf = (r) => (Array.isArray(r.discType) ? r.discType : r.discType ? [r.discType] : [])
+// Discount types carrying the Ⓢ mark stack with anything; the rest apply on their own,
+// so picking one replaces the last single-apply choice.
+const isStackableDisc = (t) => t.includes('Ⓢ')
+// A hand-typed Custom Discount is the operator's own call, not an offer, so it never
+// claims that offers were applied to the line.
+const hasOfferDiscount = (r) => discTypesOf(r).some((t) => t !== 'Custom Discount')
 const lineDiscount = (r) => {
   const amount = rowAmount(r)
-  const types = Array.isArray(r.discType) ? r.discType : [r.discType || 'Flat']
+  const types = discTypesOf(r)
   const value = Number(r.discAmt) || 0
   let disc = 0
   types.forEach(type => {
     if (type === 'Custom Discount') disc += r.discMode === 'Percentage' ? (amount * value) / 100 : value
     else if (type === 'Prive Member') disc += amount * 0.2
+    // An offer applied from the client's offers drawer discounts at its own rate;
+    // a balance-based one (Rs./Qty) selects the type without changing the amount.
+    else if (r.offerName && type === r.offerName) disc += (amount * (Number(r.offerPct) || 0)) / 100
     else if (type.endsWith('%')) disc += (amount * (parseFloat(type) || 0)) / 100
     // Additional zero-value dummy discounts like Price Package and Gold Member can be handled here if they had amounts
   })
-  if (types.includes('Flat') && !types.includes('Custom Discount')) disc += value
   return round2(Math.min(amount, Math.max(0, disc)))
 }
 
@@ -87,6 +97,15 @@ const COL = {
   itemNoStylist: 'w-[19.625rem]',  // item + gap + stylist
   totalsLabel: 'w-[26.25rem]',     // item + gap + stylist + gap + sale by
 }
+
+// Family & friends the client can bill against. The dropdown lists each one by name
+// and phone; the message above the line items uses the name on its own.
+const FNF_MEMBERS = [
+  { id: 'f1', name: 'Aarti', relation: 'Wife', phone: '9876501234' },
+  { id: 'f2', name: 'Rahul', relation: 'Son', phone: '9876505678' },
+  { id: 'f3', name: 'Priya', relation: 'Daughter', phone: '9876509012' },
+]
+const fnfLabel = (m) => `${m.name} (${m.relation}) - ${m.phone}`
 
 let guestCounter = 0
 const newGuest = () => ({
@@ -321,6 +340,32 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialGuests])
 
+  // "Apply Offers" in the client's offers drawer: the offer becomes the Disc. Type on
+  // every service and product of the guest it was opened from. A percentage offer
+  // ("10.00 %") discounts by that rate; a balance-based one (Rs./Qty) is recorded on
+  // the line without touching the amount, same as the other zero-value types.
+  const applyOffer = (offer) => {
+    const gid = offersView?.guestId ?? activeGuest?.id
+    if (!gid || !offer) return
+    const pct = String(offer.data ?? '').includes('%') ? parseFloat(offer.data) || 0 : 0
+    setGuests((gs) => gs.map((g) => {
+      if (g.id !== gid) return g
+      return {
+        ...g,
+        rows: g.rows.map((r) => {
+          if (r.kind !== 'service' && r.kind !== 'product') return r
+          // Drop any offer applied before this one.
+          const kept = discTypesOf(r).filter((t) => t !== r.offerName && t !== offer.name)
+          return { ...r, offerName: offer.name, offerPct: pct, discType: [...kept, offer.name] }
+        }),
+        // These are the client's own offers, not a family member's.
+        fnf: '',
+        offerSource: null,
+      }
+    }))
+    setOffersView(null)
+  }
+
   // Resolve the confirm: target = a guest id, or 'new'.
   const resolveSplit = (target) => {
     if (!pendingSplit) return
@@ -381,6 +426,33 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
   // --- totals ---
   // A bill-level override wipes every line-level discount.
   const rowDiscountAmount = (r) => (override ? 0 : lineDiscount(r))
+
+  // Offers are on the bill if the button put them there, a family member was picked,
+  // or any line carries an offer as its Disc. Type — the same test the message above
+  // the line items uses, so the button and the message always agree.
+  const offersOnBill =
+    offersApplied || guests.some((g) => g.offerSource?.kind === 'fnf' || g.rows.some(hasOfferDiscount))
+
+  // Removing takes every offer back off: the button's own flag, the family member and
+  // each line's offer type. A hand-typed Custom Discount is left alone.
+  const toggleOffers = () => {
+    if (!offersOnBill) {
+      setOffersApplied(true)
+      return
+    }
+    setOffersApplied(false)
+    setGuests((gs) => gs.map((g) => ({
+      ...g,
+      fnf: '',
+      offerSource: null,
+      rows: g.rows.map((r) => ({
+        ...r,
+        offerName: undefined,
+        offerPct: undefined,
+        discType: discTypesOf(r).filter((t) => t === 'Custom Discount'),
+      })),
+    })))
+  }
   const rowTotal = (r) => Math.max(0, (Number(r.price) || 0) * (r.qty || 1) - rowDiscountAmount(r))
   const guestTotal = (g) => g.rows.reduce((s, r) => s + rowTotal(r), 0)
   const grandTotal = guests.reduce((s, g) => s + guestTotal(g), 0)
@@ -551,7 +623,7 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
         <div className="flex-1 overflow-y-auto overflow-x-auto bg-gray-50/40 p-2">
           {showAll ? (
             <div className="space-y-3">
-              <AllSummary guests={guests} guestName={guestName} collapsed={itemsCollapsed} onOpen={setActive} onViewOffers={setOffersView} rowDiscountAmount={rowDiscountAmount} />
+              <AllSummary guests={guests} guestName={guestName} collapsed={itemsCollapsed} onOpen={setActive} onViewOffers={(g) => setOffersView({ customer: g.customer, guestId: g.id })} rowDiscountAmount={rowDiscountAmount} />
 
               <CheckoutPanel
                 subtotal={grossTotal}
@@ -587,11 +659,12 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
                 setRestrictedTab(typeof tab === 'string' ? tab : null)
                 setBrowseFor(activeGuest.id)
               }}
-              onViewOffers={() => setOffersView(activeGuest.customer)}
+              onViewOffers={() => setOffersView({ customer: activeGuest.customer, guestId: activeGuest.id })}
               onAddFnF={() => setAddFnFOpen(true)}
               onLoadAppt={() => setLoadApptOpen(true)}
               total={guestTotal(activeGuest)}
               rowDiscountAmount={rowDiscountAmount}
+              offersApplied={offersApplied}
               paymentAttempted={paymentAttempted}
             />
           )}
@@ -618,13 +691,13 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
                   Held Sales
                 </button>
                 <button
-                  onClick={() => setOffersApplied(!offersApplied)}
-                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-1 text-sm font-medium ${offersApplied
+                  onClick={toggleOffers}
+                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-1 text-sm font-medium ${offersOnBill
                     ? 'border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700'
                     : 'border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700'
                     }`}
                 >
-                  {offersApplied ? 'Remove Offers' : 'Apply Offers'}
+                  {offersOnBill ? 'Remove Offers' : 'Apply Offers'}
                 </button>
                 <button onClick={handleClearAll} className="flex items-center gap-1.5 rounded-full border-2 border-rose-200 px-4 py-1 text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -668,13 +741,13 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
                   Held Sales
                 </button>
                 <button
-                  onClick={() => setOffersApplied(!offersApplied)}
-                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-1 text-sm font-medium ${offersApplied
+                  onClick={toggleOffers}
+                  className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-1 text-sm font-medium ${offersOnBill
                     ? 'border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700'
                     : 'border-teal-200 text-teal-600 hover:bg-teal-50 hover:text-teal-700'
                     }`}
                 >
-                  {offersApplied ? 'Remove Offers' : 'Apply Offers'}
+                  {offersOnBill ? 'Remove Offers' : 'Apply Offers'}
                 </button>
                 <button onClick={handleClearAll} className="flex items-center gap-1.5 rounded-full border-2 border-rose-200 px-4 py-1 text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -766,7 +839,12 @@ export default function NewBillModal({ open, onClose, onBooked, onSaveDraft, ini
       />
       <RecentVisitsModal open={recentOpen} onClose={() => setRecentOpen(false)} />
       <ClientDetailsDrawer open={!!clientView} onClose={() => setClientView(null)} customer={clientView} />
-      <ViewOffersDrawer open={!!offersView} onClose={() => setOffersView(null)} customer={offersView} />
+      <ViewOffersDrawer
+        open={!!offersView}
+        onClose={() => setOffersView(null)}
+        customer={offersView?.customer}
+        onApply={applyOffer}
+      />
       <AddFnFDrawer open={addFnFOpen} onClose={() => setAddFnFOpen(false)} primaryCustomer={activeGuest?.customer} />
 
       {/* Confirm — matching-gender guest(s) exist: pick a client or make a new guest */}
@@ -838,7 +916,7 @@ function AllSummary({ guests, guestName, collapsed, onOpen, onViewOffers, rowDis
               {g.customer?.phone && <span className="text-xs font-medium text-gray-600">{g.customer.phone}</span>}
               {g.customer && (
                 <button
-                  onClick={() => onViewOffers?.(g.customer)}
+                  onClick={() => onViewOffers?.(g)}
                   className="ml-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-100"
                 >
                   View offers
@@ -924,7 +1002,7 @@ function AllSummary({ guests, guestName, collapsed, onOpen, onViewOffers, rowDis
 }
 
 // ---- Guest tab: editable items (like single booking) ----
-function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, onLoadAppt, total, rowDiscountAmount, open, paymentAttempted }) {
+function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, onRemoveRow, onBrowse, onViewOffers, onAddFnF, onLoadAppt, total, rowDiscountAmount, offersApplied, open, paymentAttempted }) {
   const kindCounts = {}
   const nums = guest.rows.map((r) => {
     const k = r.kind ?? 'service'
@@ -992,15 +1070,21 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
               <Field label="&nbsp;">
                 <select
                   className="flex h-[34px] w-full rounded-md border border-gray-200 bg-white px-2 text-xs font-medium text-gray-600 outline-none hover:bg-gray-50"
-                  value=""
+                  value={guest.fnf ?? ''}
                   onChange={(e) => {
-                    // Dummy behavior for selecting an F&F member
+                    const member = FNF_MEMBERS.find((m) => m.id === e.target.value)
+                    // Picking a family member bills the line items against their offers
+                    // rather than the client's own.
+                    onPatch({
+                      fnf: e.target.value,
+                      offerSource: member ? { kind: 'fnf', name: member.name } : null,
+                    })
                   }}
                 >
-                  <option value="" disabled>Select F&F</option>
-                  <option value="f1">Wife (Aarti)</option>
-                  <option value="f2">Son (Rahul)</option>
-                  <option value="f3">Daughter (Priya)</option>
+                  <option value="">Select F&F</option>
+                  {FNF_MEMBERS.map((m) => (
+                    <option key={m.id} value={m.id}>{fnfLabel(m)}</option>
+                  ))}
                 </select>
               </Field>
             </>
@@ -1008,6 +1092,22 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
 
         </div>
       </section>
+
+      {/* Whose offers the line items are carrying: a family member if one was picked,
+          otherwise the client's own — as soon as a line has a Disc. Type on it, or the
+          bill-wide Apply Offers has been pressed. */}
+      {guest.rows.length > 0 && (guest.offerSource?.kind === 'fnf' || offersApplied || guest.rows.some(hasOfferDiscount)) && (
+        <div className="flex justify-center items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+          <IconTag width={13} height={13} />
+          {/* the name goes in a tag, not in the string — JSX prints markup literally */}
+          {guest.offerSource?.kind === 'fnf' ? (
+            <span><strong className="font-extrabold">{guest.offerSource.name}</strong>'s Discount Has Been Applied</span>
+          ) : (
+            // the bill's own client, by name — the guest label stands in until one is picked
+            <span><strong className="font-extrabold">{guestName(guest)}</strong>'s Discount Has Been Applied</span>
+          )}
+        </div>
+      )}
 
       {/* Items */}
       <section className="rounded-xl border border-gray-300 bg-white p-2 pt-0">
@@ -1020,7 +1120,10 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
             <div className="w-max min-w-full pb-4">
               <div className="flex items-center gap-2.5 border border-transparent p-2 text-left text-[11px] font-bold text-black">
                 <div className={`${COL.item} shrink-0`}>Service / Item</div>
-                <div className={`${COL.stylist} shrink-0 text-center`}>Stylist</div>
+                {/* a service can't be paid for without one — see the payment check */}
+                <div className={`${COL.stylist} shrink-0 text-center`}>
+                  <span className="text-red-500">*</span>Stylist
+                </div>
                 <div className={`${COL.saleBy} shrink-0 text-center`}>Sale By</div>
                 <div className={`${COL.price} shrink-0`}>Price</div>
                 <div className={`${COL.qty} shrink-0 text-center`}>Qty.</div>
@@ -1044,8 +1147,7 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                     const price = Number(row.price) || 0
                     const qty = row.qty || 1
                     const amount = price * qty
-                    const discType = row.discType || 'Flat'
-                    const discTypes = Array.isArray(discType) ? discType : [discType || 'Flat']
+                    const discTypes = discTypesOf(row)
                     // Custom Discount lets the user type the value and pick Flat (₹) or Percentage.
                     const isCustomDisc = discTypes.includes('Custom Discount')
                     const discMode = row.discMode || 'Flat'
@@ -1149,15 +1251,17 @@ function GuestEditor({ guest, guestName, onCustomer, onPatch, onRecent, onRow, o
                         <div className={`${COL.discType} shrink-0`}>
                           <MultiSearchSelect
                             options={[
-                              'Flat',
                               (tag.toLowerCase().includes('service') || tag.toLowerCase().includes('product')) ? 'Custom Discount' : null,
                               'Prive Member',
                               '10%',
                               '20%',
                               'Price Package Ⓢ',
-                              'Gold Member Ⓢ'
+                              'Gold Member Ⓢ',
+                              // an offer applied from the client's offers drawer
+                              row.offerName,
                             ].filter(Boolean)}
-                            value={Array.isArray(discType) ? discType : [discType || 'Flat']}
+                            value={discTypes}
+                            isStackable={isStackableDisc}
                             onChange={(v) => onRow(row.uid, { discType: v })}
                             placeholder="Discount"
                             className="!rounded-full !h-[26px] !py-0 !text-[11px] w-full"

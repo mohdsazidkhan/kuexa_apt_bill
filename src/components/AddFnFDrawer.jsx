@@ -13,6 +13,10 @@ const dummyMemberships = [
   { id: 8, name: 'Holiday Giftcard', type: 'Giftcard', price: 1000, end: '12-12-2025', added: false },
 ]
 
+// The person being added to the primary client's F&F. Hard-wired for the demo, and
+// read by both the title and the details on the right so the two can't disagree.
+const FNF_MEMBER = { name: 'Anshu Saini', phone: '8528174444', gender: 'Female' }
+
 export default function AddFnFDrawer({ open, onClose, primaryCustomer }) {
   const [selectedOffers, setSelectedOffers] = useState([1]) // ID 1 is pre-selected
   const [search, setSearch] = useState('')
@@ -39,7 +43,7 @@ export default function AddFnFDrawer({ open, onClose, primaryCustomer }) {
         {/* Header */}
         <div className="flex items-center justify-center bg-[#2c4c6b] px-2 py-1 text-white">
           <h2 className="text-lg font-bold tracking-wide">
-            Add Anshu Saini To F&F Of {primaryCustomer.name}
+            Add {FNF_MEMBER.name} To F&F Of {primaryCustomer.name}
           </h2>
           <button onClick={onClose} className="absolute right-4 top-1 rounded p-1 hover:bg-[#1a3551]">
             <IconClose width={20} height={20} />
@@ -63,13 +67,13 @@ export default function AddFnFDrawer({ open, onClose, primaryCustomer }) {
 
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1 font-semibold text-[#1e88e5]">
-              {primaryCustomer.name}
+              {FNF_MEMBER.name}
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </div>
-            <div className="font-bold text-gray-800">{primaryCustomer.phone}</div>
-            <div className="font-bold text-gray-800">{primaryCustomer.gender === 'Male' ? 'M' : 'F'}</div>
+            <div className="font-bold text-gray-800">{FNF_MEMBER.phone}</div>
+            <div title={FNF_MEMBER.gender} className="font-bold text-gray-800">{FNF_MEMBER.gender === 'Male' ? 'M' : 'F'}</div>
           </div>
         </div>
 

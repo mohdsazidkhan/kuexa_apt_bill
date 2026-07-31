@@ -249,7 +249,10 @@ export function SearchSelect({ value, onChange, options, placeholder = 'Select..
 }
 
 // ---- Generic searchable multi-select over string options ----
-export function MultiSearchSelect({ value = [], onChange, options, placeholder = 'Select...', searchPlaceholder = 'Search...', dropWidth = 'w-48', className = '' }) {
+// `isStackable` marks the options that combine with others — they stay checkboxes.
+// Everything else is one-at-a-time: picking one drops the other non-stackable choice,
+// and they're drawn as radios so the rule reads before you click.
+export function MultiSearchSelect({ value = [], onChange, options, isStackable, placeholder = 'Select...', searchPlaceholder = 'Search...', dropWidth = 'w-48', className = '' }) {
   const [open, setOpen] = useState(false)
   const [openUp, setOpenUp] = useState(false)
   const [q, setQ] = useState('')
@@ -260,7 +263,13 @@ export function MultiSearchSelect({ value = [], onChange, options, placeholder =
     return () => document.removeEventListener('mousedown', h)
   }, [])
   const filtered = options.filter((o) => o.toLowerCase().includes(q.toLowerCase()))
-  const toggle = (name) => onChange(value.includes(name) ? value.filter((n) => n !== name) : [...value, name])
+  const stacks = (name) => (isStackable ? isStackable(name) : true)
+  const toggle = (name) => {
+    if (value.includes(name)) return onChange(value.filter((n) => n !== name))
+    // A single-apply choice replaces whichever single-apply choice was there.
+    const kept = stacks(name) ? value : value.filter(stacks)
+    onChange([...kept, name])
+  }
   const label = value.length === 0 ? placeholder : value.length === 1 ? value[0] : `${value.length} selected`
   
   const handleToggle = () => {
@@ -288,7 +297,14 @@ export function MultiSearchSelect({ value = [], onChange, options, placeholder =
           <div className="mt-1 max-h-48 overflow-y-auto">
             {filtered.map((o) => (
               <label key={o} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50">
-                <input type="checkbox" checked={value.includes(o)} onChange={() => toggle(o)} className="h-4 w-4 accent-indigo-600" />
+                <input
+                  type={stacks(o) ? 'checkbox' : 'radio'}
+                  checked={value.includes(o)}
+                  onChange={() => toggle(o)}
+                  // a radio would otherwise have no way to clear itself
+                  onClick={() => { if (!stacks(o) && value.includes(o)) toggle(o) }}
+                  className="h-4 w-4 accent-indigo-600"
+                />
                 <span className="text-sm text-gray-700">{o}</span>
               </label>
             ))}

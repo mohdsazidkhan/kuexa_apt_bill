@@ -18,7 +18,7 @@ const dummyOffers = [
   { id: 11, name: 'CO_001_TESTING_SEP', user: 'Anshu Saini', type: 'ComboOffer', data: '1 Qty', end: '24-09-2026' },
 ]
 
-export default function ViewOffersDrawer({ open, onClose, customer }) {
+export default function ViewOffersDrawer({ open, onClose, customer, onApply }) {
   const [selectedHistoryOffer, setSelectedHistoryOffer] = useState(null)
   const [selectedDetailOffer, setSelectedDetailOffer] = useState(null)
   // Slides in from the right and back out again, same as the F&F drawer.
@@ -100,7 +100,13 @@ export default function ViewOffersDrawer({ open, onClose, customer }) {
                   <td className="px-2 py-1 font-semibold text-gray-600">{offer.data}</td>
                   <td className="px-2 py-1 font-semibold text-gray-600">{offer.end}</td>
                   <td className="px-2 py-1 text-center">
-                    <button className="rounded-full bg-[#2c75b3] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#225c8d]">
+                    {/* Puts this offer on the bill's services and products as their
+                        Disc. Type, then closes back to the bill. */}
+                    <button
+                      onClick={() => onApply?.(offer)}
+                      title={`Apply ${offer.name} to this bill's services and products`}
+                      className="rounded-full bg-[#2c75b3] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#225c8d]"
+                    >
                       Apply Offers
                     </button>
                   </td>
